@@ -1,9 +1,13 @@
 from __future__ import division
 from numpy.polynomial.legendre import leggauss, legval
-from sympy import legendre, Symbol, Expr, lambdify
+from sympy import legendre, symbols, Expr, lambdify
 from scipy.sparse import diags
+from itertools import product
 from common import function
 import numpy as np
+
+
+x, y = symbols('x, y')
 
 
 def legendre_basis(N, symbol='x'):
@@ -23,6 +27,12 @@ def legendre_function(F, symbol='x'):
 def mass_matrix(N):
     '''Mass matrix of legendre_basis(N).'''
     return diags(np.array([2/(2*i+1) for i in range(N)]), 0)
+
+
+def stiffness_matrix(N):
+    '''Stiffness matrix of legendre_basis(N).'''
+    # TODO 
+    pass
 
 
 def backward_transformation_matrix(N):
@@ -53,6 +63,7 @@ class BackwardLegendreTransformation(object):
     Perform backward Legendre transformations. The transformation matrix
     is computed only once.
     '''
+    # TODO for 2d
     def __init__(self, N):
         '''Cache the matrix.'''
         self.__BL = backward_transformation_matrix(N)
@@ -107,11 +118,34 @@ def node_eval(N, f):
     '''Evaluate f at nodes of N point GL quadrature.'''
     # In general the input should be some sort of (lambda) function
     # Sympy functions are lambdified for fast numpy evaluation
-    if isinstance(f, Expr):
-        f = lambdify(x, f, 'numpy')
+    # Evaluate function of x, y
+    if isinstance(N, list):
+        assert len(N) == 2
+        # The evaluation points are a tensor product
+        points_x, _ = leggauss(N[0])
+        points_y, _ = leggauss(N[1])
+        points = np.array([np.array([p_x, p_y])
+                           for p_x, p_y in product(points_x, points_y)]) 
+        # Make sure we have functions of two vars
+        if isinstance(f, Expr):
+            assert x in f.atoms() and y in f.atoms()
+            f = lambdify([x, y], f, 'numpy')
+            return f(points[:, 0], points[:, 1]).reshape((N[0], N[1]))
+        else:
+            assert f.func_code.co_argcount == 2
+            return np.array([f(*p) for p in points]).reshape((N[0], N[1]))
 
-    points, _ = leggauss(N)
-    return f(points)
+    else:
+        # Evaluate function of x
+        points, _ = leggauss(N)
+        # Make sure we have function of x 
+        if isinstance(f, Expr):
+            assert x in f.atoms()
+            f = lambdify(x, f, 'numpy')
+            return f(points)
+        else:
+            assert f.func_code.co_argcount == 1
+            return np.array([f(p) for p in points])
 
 
 class ForwardLegendreTransformation(object):
@@ -119,6 +153,7 @@ class ForwardLegendreTransformation(object):
     Perform forward Legendre transformations. The transformation matrix
     is computed only once and so are the nodes for evaluation.
     '''
+    # TODO for 2d
     def __init__(self, N):
         '''Cache the matrix.'''
         self.__FL, self.__points = forward_transformation_matrix(N, True)
@@ -139,7 +174,7 @@ class ForwardLegendreTransformation(object):
 # -----------------------------------------------------------------------------
 
 if __name__ == '__main__':
-    from sympy import simplify, sin, cos, pi
+    from sympy import simplify, sin, cos, pi, Symbol
     from sympy.mpmath import quad
     from sympy.plotting import plot
     import matplotlib.pyplot as plt
@@ -169,9 +204,9 @@ if __name__ == '__main__':
     f_ = lambdify(x, f, 'numpy')
     
     tol = 1E-13
-    converged = False
+    converged = True
     N = 1
-    N_max = 100
+    N_max = 10
     # If you had expansion as F_ coeffs for a function then its L^2 norm could
     # be computed via the mass matrix as sqrt(F_.M.F_)
     # Take the largest space
@@ -179,6 +214,7 @@ if __name__ == '__main__':
 
     Ns, errors = [], []
     while not converged:
+        print 'xxx', N
         F = ForwardLegendreTransformation(N)(f_)
         f_N = legendre_function(F)
         e = simplify(f-f_N)
@@ -196,7 +232,7 @@ if __name__ == '__main__':
         Ns.append(N)
         errors.append(error)
 
-        converged = error < tol or N > N_max
+        converged = error < tol or N >= N_max
 
         N += 1
 
@@ -205,13 +241,36 @@ if __name__ == '__main__':
     pf_ = plot(f_N, (x, -1, 1), show=False)
     pf_[0].line_color='red'
     pf.append(pf_[0])
-    pf.show()
+    # pf.show()
 
     # Plot convergence history
     plt.figure()
     plt.loglog(Ns, errors)
-    plt.show()
+    # plt.show()
 
     # Note that for sufficiently regular function the convergence is exponential
     # but the sin(x)*cos(pi*x**2) example shows that for exponential convergence
     # N must be big enough
+
+    # Test the stiffness_matrix
+    # n = 6
+    # basis = legendre_basis(n)
+    # A = np.zeros((n, n))
+    # for i, v in enumerate(basis):
+    #     for j, u in enumerate(basis):
+    #         integrand = lambdify(x, u.diff(x)*v.diff(x))
+    #         A[i, j] = quad(integrand, [-1, 1])
+    # 
+    # A_ = stiffness_matrix(n)
+    # 
+    # print A
+    # print A_
+
+    f = sin(pi*x)*sin(3*pi*y)
+    print node_eval([4, 5], f)
+
+    from math import sin
+    f = lambda x, y: sin(pi*x)*sin(3*pi*y)
+    print node_eval([4, 5], f)
+
+
