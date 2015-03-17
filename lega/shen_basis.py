@@ -26,9 +26,25 @@ def shen_basis(n, symbol='x'):
 
 
 def shen_function(F):
-    '''A linear combination of F_i and the Shen basis functions.'''
-    basis = shen_basis(len(F))
-    return function(basis, F)
+    '''
+    A linear combination of F_i and the Shen basis functions. If F is a 
+    vector the result is a function of F. For F matrix the output is a function
+    of x, y.
+    '''
+    # 1d
+    if F.shape == (len(F), ):
+        basis = shen_basis(len(F), 'x')
+        return function(basis, F)
+    # 2d
+    elif len(F.shape) == 2:
+        basis = tensor_product([shen_basis(F.shape[0], 'x'),
+                                shen_basis(F.shape[1], 'y')])
+        # Collapse to coefs by row
+        F = F.flatten()
+        return function(basis, F)
+    # No 3d yet
+    else:
+        raise ValueError('For now F can be a a tensor of rank at most 2.')
 
 
 def mass_matrix(n):
@@ -74,15 +90,34 @@ def load_vector(F):
     f(x) is replaced by its Legendre interpolant of degree n+1. Then b = T*M*F,
     where F is the n+1 long vector of expansion coeffs, M is the (n+1)x(n+1) 
     mass matrix in Legendre basis and T is the (n-1)x(n+1) transformation matrix
-    that takes the result from Legendre to Shen basis.
+    that takes the result from Legendre to Shen basis. This generatlized to 2d
+    as well. with b(matrix) = (T*M)*F(T.M).T. Note F is not necessary square
     '''
-    # We do the matrix vector products manually
-    m = len(F)
-    n = m-2
-    b = np.zeros(n)
-    for j in range(n):
-        w = 1./Sqrt(4*j+6)  # Shen weight
-        b[j] = -w*(2*F[j]/(2*j+1) - 2*F[j+2]/(2*(j+2)+1))
+    # We do the operations manually
+    # 1d
+    if F.shape == (len(F), ):
+        m = len(F)
+        n = m-2
+        b = np.zeros(n)
+        for j in range(n):
+            w = 1./Sqrt(4*j+6)  # Shen weight
+            b[j] = -w*(2*F[j]/(2*j+1) - 2*F[j+2]/(2*(j+2)+1))
+    else:
+        # 2d, Don't need 3d yet?
+        assert len(F.shape) == 2
+
+        weight = lambda j: 1./Sqrt(4*j + 6)
+        norm = lambda j: 2/(2*j + 1)
+        
+        n = F.shape[0] - 2
+        m = F.shape[1] - 2
+        b = np.zeros((n, m))
+        for i in range(n):
+            for j in range(m):
+                b[i, j] = F[i, j]*weight(i)*weight(j)*norm(i)*norm(j)
+                b[i, j] -= F[i+2, j]*weight(i+2)*weight(j)*norm(i+2)*norm(j)
+                b[i, j] -= F[i, j+2]*weight(i)*weight(j+2)*norm(i)*norm(j+2)
+                b[i, j] += F[i+2, j+2]*weight(i+2)*weight(j+2)*norm(i+2)*norm(j+2) 
 
     return b
 
@@ -113,110 +148,150 @@ if __name__ == '__main__':
     # Check the transformation
     from legendre_basis import legendre_basis, ForwardLegendreTransformation as\
         FLT, mass_matrix as L_mass_matrix
-    from sympy import lambdify, sin, pi, integrate
+    from sympy import lambdify, sin, pi, integrate, symbols
     from sympy.mpmath import quad
 
-    # The goal is to get these function from Legendre
-    n = 4
-    shen = shen_basis(n)
+    test_1d = False
+    test_2d = True
 
-    m = n+2
-    leg = legendre_basis(m)
-    T = legendre_to_shen_matrix(m).toarray()
-    # Do the linear combination
-    shen_ = [sum(T[i, j]*leg[j] for j in range(m)) for i in range(n)]
+    if test_1d:
+        # The goal is to get these function from Legendre
+        n = 4
+        shen = shen_basis(n)
 
-    x = Symbol('x')
-    # Allow some room for error in L^2 norm integration and inexact
-    # arithmetics in computing coefficients
-    assert all(Sqrt(quad(lambdify(x, (s-s_)**2), [-1, 1])) < 1E-13
-               for s, s_ in zip(shen, shen_))
+        m = n+2
+        leg = legendre_basis(m)
+        T = legendre_to_shen_matrix(m).toarray()
+        # Do the linear combination
+        shen_ = [sum(T[i, j]*leg[j] for j in range(m)) for i in range(n)]
 
-    # Check that the load vector is assembled correctly
-    f = (x**2-1)
-    b_exact = np.array([float(quad(lambdify(x, f*phi), [-1, 1]))
-                        for phi in shen])
+        x = Symbol('x')
+        # Allow some room for error in L^2 norm integration and inexact
+        # arithmetics in computing coefficients
+        assert all(Sqrt(quad(lambdify(x, (s-s_)**2), [-1, 1])) < 1E-13
+                   for s, s_ in zip(shen, shen_))
 
-    F = FLT(m)(f)
-    b0 = load_vector(F)
-    assert np.linalg.norm(b0-b_exact)/n < 1E-15
+        # 1d
+        # Check that the load vector is assembled correctly
+        f = (x**2-1)
+        b_exact = np.array([float(quad(lambdify(x, f*phi), [-1, 1]))
+                            for phi in shen])
 
-    # Check that the logic of getting the load vector by transformations
-    T = legendre_to_shen_matrix(m)
-    M = L_mass_matrix(m)
-    b1 = T.dot(M.dot(F))
-    assert np.linalg.norm(b1-b_exact)/n < 1E-15
+        F = FLT(m)(f)
+        b0 = load_vector(F)
+        assert np.linalg.norm(b0-b_exact)/n < 1E-15
 
-    # We know that for f and F = FLT(f), M the Legendre mass matrix the value
-    # sqrt{F.M.F} is L^2 norm of f if f is represented exactly
-    ans_ = Sqrt(F.dot(M.dot(F)))
-    ans = sqrt(integrate(f**2, (x, -1, 1)))
-    assert abs((ans - ans_).n()) < 1E-13
-
-    # Some observations about approximation properties of the shen basis
-    # Consider shen basis of length n and to every f assign a series f_n = 
-    # sum F_k \phi_k where F_k is the solution to the linear system M*F = b
-    # for b in (f, phi_k).
-    # How does this behave for a polynomial that is in H^1_0
-    f = (x-1)*(x+1)**3
-    # This has degree four. Shen of length 3 has that degree and should be fine
-    for n in range(2, 15):
-        basis = shen_basis(n)
-        M = mass_matrix(n)
-        b = np.array([quad(lambdify(x, f*phi), [-1, 1]) for phi in basis])
-        F = np.linalg.solve(M.toarray(), b)
-
-        f_n = shen_function(F)
-
-        e = f-f_n
-        error = float(sqrt(quad(lambdify(x, e**2), [-1, 1])))
-        print 'n=%d, error=%g' % (n, error)
-
-        # Let's check that f_n in shen can be obtained by mapping legendre
-        F_leg = FLT(n+2)(f)
-        F_shen = apply_mass_inverse(F_leg) 
-        
-        print '\t inverse - apply inverse', np.linalg.norm((F - F_shen))
-
-    # Some function in H^10
-    f = (x-1)**2*sin(pi*x)
-    # This has degree four. Shen of length 3 has that degree and should be fine
-    for n in range(2, 15):
-        basis = shen_basis(n)
-        M = mass_matrix(n)
-        b = np.array([quad(lambdify(x, f*phi), [-1, 1]) for phi in basis])
-        F = np.linalg.solve(M.toarray(), b)
-
-        f_n = shen_function(F)
-
-        e = f-f_n
-        error = float(sqrt(quad(lambdify(x, e**2), [-1, 1])))
-        print 'n=%d, error=%g' % (n, error)
-
-        # Let's check that f_n in shen can be obtained by mapping legendre
-        F_leg = FLT(n+2)(f)
-        F_shen = apply_mass_inverse(F_leg) 
-        # Note how this improves with degree :) 
-        print '\t inverse - apply inverse', np.linalg.norm((F - F_shen))
+        # Check that the logic of getting the load vector by transformations
+        T = legendre_to_shen_matrix(m)
+        M = L_mass_matrix(m)
+        b1 = T.dot(M.dot(F))
+        assert np.linalg.norm(b1-b_exact)/n < 1E-15
 
 
-    # What about polynomial not there just in H^1 but not in H^1_0 - should be
-    # hopeless
-    f = (x-1)*(x+2)**3
-    for n in range(2, 15):
-        basis = shen_basis(n)
-        M = mass_matrix(n)
-        b = np.array([quad(lambdify(x, f*phi), [-1, 1]) for phi in basis])
-        F = np.linalg.solve(M.toarray(), b)
+        # We know that for f and F = FLT(f), M the Legendre mass matrix the value
+        # sqrt{F.M.F} is L^2 norm of f if f is represented exactly
+        ans_ = Sqrt(F.dot(M.dot(F)))
+        ans = sqrt(integrate(f**2, (x, -1, 1)))
+        assert abs((ans - ans_).n()) < 1E-13
 
-        f_n = shen_function(F)
+        # Some observations about approximation properties of the shen basis
+        # Consider shen basis of length n and to every f assign a series f_n = 
+        # sum F_k \phi_k where F_k is the solution to the linear system M*F = b
+        # for b in (f, phi_k).
+        # How does this behave for a polynomial that is in H^1_0
+        f = (x-1)*(x+1)**3
+        # This has degree four. Shen of length 3 has that degree and should be fine
+        for n in range(2, 15):
+            basis = shen_basis(n)
+            M = mass_matrix(n)
+            b = np.array([quad(lambdify(x, f*phi), [-1, 1]) for phi in basis])
+            F = np.linalg.solve(M.toarray(), b)
 
-        e = f-f_n
-        error = float(sqrt(quad(lambdify(x, e**2), [-1, 1])))
-        print 'n=%d, error=%g' % (n, error)
+            f_n = shen_function(F)
 
-        F_leg = FLT(n+2)(f)
-        F_shen = apply_mass_inverse(F_leg) 
-        
-        print '\t inverse - apply inverse', np.linalg.norm((F - F_shen))
-    # And it is
+            e = f-f_n
+            error = float(sqrt(quad(lambdify(x, e**2), [-1, 1])))
+            print 'n=%d, error=%g' % (n, error)
+
+            # Let's check that f_n in shen can be obtained by mapping legendre
+            F_leg = FLT(n+2)(f)
+            F_shen = apply_mass_inverse(F_leg) 
+            
+            print '\t inverse - apply inverse', np.linalg.norm((F - F_shen))
+
+        # Some function in H^10
+        f = (x-1)**2*sin(pi*x)
+        # This has degree four. Shen of length 3 has that degree and should be fine
+        for n in range(2, 15):
+            basis = shen_basis(n)
+            M = mass_matrix(n)
+            b = np.array([quad(lambdify(x, f*phi), [-1, 1]) for phi in basis])
+            F = np.linalg.solve(M.toarray(), b)
+
+            f_n = shen_function(F)
+
+            e = f-f_n
+            error = float(sqrt(quad(lambdify(x, e**2), [-1, 1])))
+            print 'n=%d, error=%g' % (n, error)
+
+            # Let's check that f_n in shen can be obtained by mapping legendre
+            F_leg = FLT(n+2)(f)
+            F_shen = apply_mass_inverse(F_leg) 
+            # Note how this improves with degree :) 
+            print '\t inverse - apply inverse', np.linalg.norm((F - F_shen))
+
+
+        # What about polynomial not there just in H^1 but not in H^1_0 - should be
+        # hopeless
+        f = (x-1)*(x+2)**3
+        for n in range(2, 15):
+            basis = shen_basis(n)
+            M = mass_matrix(n)
+            b = np.array([quad(lambdify(x, f*phi), [-1, 1]) for phi in basis])
+            F = np.linalg.solve(M.toarray(), b)
+
+            f_n = shen_function(F)
+
+            e = f-f_n
+            error = float(sqrt(quad(lambdify(x, e**2), [-1, 1])))
+            print 'n=%d, error=%g' % (n, error)
+
+            F_leg = FLT(n+2)(f)
+            F_shen = apply_mass_inverse(F_leg) 
+            
+            print '\t inverse - apply inverse', np.linalg.norm((F - F_shen))
+        # And it is
+
+    # 2d
+    if test_2d:
+        # Check that the load vector is assembled correctly
+        from common import tensor_product
+
+        x, y = symbols('x, y')
+        f = (x**2-1)*y**3
+
+        n, m = 1, 2 
+        basis_i = [shen_basis(n, 'x'), shen_basis(m, 'y')]
+        shen = tensor_product(basis_i)
+
+        b_exact = np.array([float(quad(lambdify([x, y], f*phi), [-1, 1], [-1, 1]))
+                            for phi in shen])
+        F = FLT([n+2, m+2])(f)
+        b0 = load_vector(F).flatten()
+
+        print b0
+        print b_exact
+        print np.linalg.norm(b0-b_exact)/n
+        # FIXME
+
+        # Check that the logic of getting the load vector by transformations
+        Tn = legendre_to_shen_matrix(n+2)
+        Mn = L_mass_matrix(n+2)
+        mat0 = Tn.dot(Mn.toarray())
+
+        Tm = legendre_to_shen_matrix(m+2)
+        Mm = L_mass_matrix(m+2)
+        mat1 = Tm.dot(Mm.toarray())
+
+        b1 = mat0.dot(F.dot(mat1.T)).flatten()
+        assert np.all(np.abs(b1-b_exact) < 1E-15)

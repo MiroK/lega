@@ -1,6 +1,6 @@
 from __future__ import division
 from numpy.polynomial.legendre import leggauss, legval
-from sympy import legendre, symbols, Expr, lambdify
+from sympy import legendre, symbols, Expr, lambdify, Symbol
 from scipy.sparse import diags
 from itertools import product
 from common import function, tensor_product
