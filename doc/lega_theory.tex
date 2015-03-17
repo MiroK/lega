@@ -1,0 +1,173 @@
+\documentclass[a4paper,10pt]{article}
+\pdfoptionpdfminorversion=5
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsfonts}
+\usepackage{multicol}
+\usepackage{xcolor,colortbl}
+\usepackage[yyyymmdd,hhmmss]{datetime}
+\usepackage{xfrac}
+
+\newcommand{\mc}[2]{\multicolumn{#1}{c}{#2}}
+\definecolor{Gray}{gray}{0.85}
+\newcolumntype{a}{>{\columncolor{Gray}}c}
+\newcolumntype{b}{>{\columncolor{white}}c}
+\newcolumntype{R}{>{\columncolor{lime}}c}
+\newcolumntype{B}{>{\columncolor{pink}}c}
+\usepackage{diagbox}
+
+\usepackage[numbers]{natbib}
+
+\usepackage[utf8]{inputenc}
+\usepackage{array,multirow,graphicx}
+\usepackage{graphics}
+\usepackage{color}
+\usepackage{ifpdf}
+\ifpdf
+\DeclareGraphicsRule{*}{mps}{*}{}
+\fi
+\usepackage[utf8]{inputenc}
+
+\hoffset = 0pt
+\voffset = 0pt
+\oddsidemargin = 0pt
+\headheight = 15pt
+\footskip = 30pt
+\topmargin = 0pt
+\marginparsep = 5pt
+\headsep =25pt
+\marginparwidth = 54pt
+\marginparpush = 7pt
+\textheight = 621pt %621/
+\textwidth = 500pt
+
+% Default fixed font does not support bold face
+\DeclareFixedFont{\ttb}{T1}{txtt}{bx}{n}{12} % for bold
+\DeclareFixedFont{\ttm}{T1}{txtt}{m}{n}{12}  % for normal
+
+\newcommand{\I}{\ensuremath{\mathbb{I}}}
+\newcommand{\R}{\ensuremath{\mathbb{R}}}
+
+\newcommand{\norm}[1]{\ensuremath{\left\|#1\right\|}}
+\newcommand{\seminorm}[1]{\ensuremath{\left|#1\right|}}
+\newcommand{\dual}[2]{\ensuremath{\langle#1, #2 \rangle}}
+
+\newcommand{\inner}[2]{\ensuremath{\left(#1, #2\right)}}
+\newcommand{\Inner}[2]{\ensuremath{\left(\left(#1, #2\right)\right)}}
+
+\newcommand{\deriv}[2]{\ensuremath{\frac{\mathrm{d}#1}{\mathrm{d}#2}}}
+\newcommand{\meas}[1]{\ensuremath{\,\mathrm{d}#1}}
+\newcommand{\Div}[1] {\ensuremath{\text{div}#1}}
+\newcommand{\Grad}[1]{\ensuremath{\text{grad}#1}}
+\newcommand{\Curl}[1]{\ensuremath{\text{curl}#1}}
+\newcommand{\jump}[1]{\ensuremath{[\![#1]\!]} }
+
+\newcommand{\citeneed}{\ensuremath{^\text{\textcolor{blue}{cite?}}}}
+
+\usepackage{mathtools}
+\newcommand{\eqdef}{\mathrel{\mathop=}:} 
+
+\newcommand{\mm}{\ensuremath{\mathbf{m}}}
+\newcommand{\Vp}{\ensuremath{V_{\mathcal{P}}}}
+\newcommand{\Vb}{\ensuremath{V_{\mathcal{B}}}}
+\newcommand{\Ep}{\ensuremath{E_{\mathcal{P}}}}
+\newcommand{\Eb}{\ensuremath{E_{\mathcal{B}}}}
+
+%matrices
+\newcommand{\Ap}{\ensuremath{\mathbb{A}_{\mathcal{P}}}}
+\newcommand{\Ab}{\ensuremath{\mathbb{A}_{\mathcal{B}}}}
+\newcommand{\Bp}{\ensuremath{\mathbb{B}_{\mathcal{P}}}}
+\newcommand{\Bb}{\ensuremath{\mathbb{B}_{\mathcal{B}}}}
+\newcommand{\Amat}{\ensuremath{\mathbb{A}}}
+\newcommand{\Bmat}{\ensuremath{\mathbb{B}}}
+\newcommand{\Bmatt}{\ensuremath{\mathbb{B}^{\text{T}}}}
+\newcommand{\Mmat}{\ensuremath{\mathbb{M}}}
+\newcommand{\Nmat}{\ensuremath{\mathbb{N}}}
+%components
+\newcommand{\Apij}[2]{\ensuremath{\left(\mathbb{A}_{\mathcal{P}}\right)_{#1, #2}}}
+\newcommand{\Abij}[2]{\ensuremath{\left(\mathbb{A}_{\mathcal{B}}\right)_{#1, #2}}}
+\newcommand{\Bpij}[2]{\ensuremath{\left(\mathbb{B}_{\mathcal{P}}\right)_{#1, #2}}}
+\newcommand{\Bbij}[2]{\ensuremath{\left(\mathbb{B}_{\mathcal{B}}\right)_{#1, #2}}}
+%vectors
+\newcommand{\Uvec}{\ensuremath{\mathbf{U}}}
+\newcommand{\bvec}{\ensuremath{\mathbf{b}}}
+\newcommand{\Pvec}{\ensuremath{\mathbf{P}}}
+
+\newcommand{\up}{\ensuremath{u_{\mathcal{P}}}}
+\newcommand{\ub}{\ensuremath{u_{\mathcal{B}}}}
+\newcommand{\vp}{\ensuremath{v_{\mathcal{P}}}}
+\newcommand{\vb}{\ensuremath{v_{\mathcal{B}}}}
+\newcommand{\TODO}[1]{\textcolor{red}{#1}}
+\newcommand{\ASK}[1]{\textcolor{blue}{#1}}
+\newcommand{\CODE}[1]{\textcolor{orange}{Produced by {#1}}}
+
+\newcommand{\W}[1]{\ensuremath{w\!\left[#1\right]\!}}
+\newcommand{\E}[1]{\ensuremath{\epsilon \!\left[#1\right]\!}}
+\newcommand{\T}[1]{\ensuremath{\sigma \! \left[#1\right]\!}}
+
+\newcommand{\Tr}[1]{\ensuremath{\text{tr}#1}}
+\newcommand*{\defeq}{\mathrel{\vcenter{\baselineskip0.5ex \lineskiplimit0pt
+                     \hbox{\scriptsize.}\hbox{\scriptsize.}}}%
+                     =}
+
+\usepackage{lipsum}
+\usepackage{authblk}
+\usepackage{fancyhdr}
+\usepackage[colorlinks=true,
+            linkcolor=cyan,
+            citecolor=gray]{hyperref}
+
+\usepackage{chngcntr}
+\counterwithin{table}{subsection}
+
+\DeclareMathOperator{\spn}{span}
+
+% DEBUGGING
+\usepackage{lineno}
+\linenumbers
+%\usepackage{setspace}
+%\doublespacing
+%
+%\pagestyle{fancy}
+%
+\renewenvironment{abstract}{%
+\hfill\begin{minipage}{0.95\textwidth}
+\rule{\textwidth}{1pt}}
+{\par\noindent\rule{\textwidth}{1pt}\end{minipage}}
+%
+\makeatletter
+\renewcommand\@maketitle{%
+\hfill
+\begin{minipage}{0.95\textwidth}
+\vskip 2em
+\let\footnote\thanks 
+{\LARGE \@title \par }
+\vskip 1.5em
+{\large \@author \par}
+\end{minipage}
+\vskip 1em \par
+}
+\makeatother
+%
+\begin{document}
+%
+%title and author details
+\title{\begin{center}
+    Some theory behind LEGA\footnote{Last modified on \today@\currenttime}
+       \end{center}}
+\author[1]{Miroslav Kuchta
+       }
+\maketitle
+
+\begin{abstract}
+  Foo
+\end{abstract}
+
+bar
+\cite{shen_leg}
+
+  \newpage
+  \bibliographystyle{plain}
+  \bibliography{lega_theory}
+\end{document}
