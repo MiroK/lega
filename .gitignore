@@ -3,3 +3,11 @@
 
 /build
 /lib
+
+*.aux
+*.bbl
+*.blg
+*.out
+*.log
+*.pdf
+

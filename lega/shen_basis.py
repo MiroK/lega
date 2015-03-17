@@ -2,7 +2,7 @@ from __future__ import division
 from math import sqrt as Sqrt
 from sympy import sqrt, Symbol, legendre
 from scipy.sparse import eye, diags
-from common import function
+from common import function, tensor_product
 import numpy as np
 
 
@@ -105,19 +105,8 @@ def load_vector(F):
     else:
         # 2d, Don't need 3d yet?
         assert len(F.shape) == 2
-
-        weight = lambda j: 1./Sqrt(4*j + 6)
-        norm = lambda j: 2/(2*j + 1)
-        
-        n = F.shape[0] - 2
-        m = F.shape[1] - 2
-        b = np.zeros((n, m))
-        for i in range(n):
-            for j in range(m):
-                b[i, j] = F[i, j]*weight(i)*weight(j)*norm(i)*norm(j)
-                b[i, j] -= F[i+2, j]*weight(i+2)*weight(j)*norm(i+2)*norm(j)
-                b[i, j] -= F[i, j+2]*weight(i)*weight(j+2)*norm(i)*norm(j+2)
-                b[i, j] += F[i+2, j+2]*weight(i+2)*weight(j+2)*norm(i+2)*norm(j+2) 
+        b = np.array([load_vector(colF) for colF in F.T])
+        b = np.array([load_vector(rowb) for rowb in b.T])
 
     return b
 
@@ -265,12 +254,10 @@ if __name__ == '__main__':
     # 2d
     if test_2d:
         # Check that the load vector is assembled correctly
-        from common import tensor_product
-
         x, y = symbols('x, y')
-        f = (x**2-1)*y**3
+        f = (x**2-1)*y**4
 
-        n, m = 1, 2 
+        n, m = 2, 3
         basis_i = [shen_basis(n, 'x'), shen_basis(m, 'y')]
         shen = tensor_product(basis_i)
 
@@ -278,11 +265,7 @@ if __name__ == '__main__':
                             for phi in shen])
         F = FLT([n+2, m+2])(f)
         b0 = load_vector(F).flatten()
-
-        print b0
-        print b_exact
-        print np.linalg.norm(b0-b_exact)/n
-        # FIXME
+        assert np.all(np.abs(b0-b_exact) < 1E-15)
 
         # Check that the logic of getting the load vector by transformations
         Tn = legendre_to_shen_matrix(n+2)

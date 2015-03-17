@@ -80,7 +80,7 @@ if __name__ == '__main__':
 
         print 'n=%d, |e|_2=%.4E  {e}_2=%.4E' % (n, error, error_)
 
-        converged = error < tol or n > n_max
+        converged = error < tol or n >= n_max
         n += 1
 
     # Plot the final numerical one againt analytical
