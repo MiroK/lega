@@ -3,11 +3,8 @@ from numpy.polynomial.legendre import leggauss, legval
 from sympy import legendre, symbols, Expr, lambdify
 from scipy.sparse import diags
 from itertools import product
-from common import function
+from common import function, tensor_product
 import numpy as np
-
-
-x, y = symbols('x, y')
 
 
 def legendre_basis(N, symbol='x'):
@@ -15,13 +12,26 @@ def legendre_basis(N, symbol='x'):
     return [legendre(k, Symbol(symbol)) for k in range(N)]
 
 
-def legendre_function(F, symbol='x'):
+def legendre_function(F):
     '''
-    A linear combination of F_i and the legendre basis functions as funnction
-    of symbol.
+    A linear combination of F_i and the legendre basis functions. If F is a 
+    vector the result is a function of F. For F matrix the output is a function
+    of x, y.
     '''
-    basis = legendre_basis(len(F), symbol)
-    return function(basis, F)
+    # 1d
+    if F.shape == (len(F), ):
+        basis = legendre_basis(len(F), 'x')
+        return function(basis, F)
+    # 2d
+    elif len(F.shape) == 2:
+        basis = tensor_product([legendre_basis(F.shape[0], 'x'),
+                                legendre_basis(F.shape[1], 'y')])
+        # Collapse to coefs by row
+        F = F.flatten()
+        return function(basis, F)
+    # No 3d yet
+    else:
+        raise ValueError('For now F can be a a tensor of rank at most 2.')
 
 
 def mass_matrix(N):
@@ -31,8 +41,17 @@ def mass_matrix(N):
 
 def stiffness_matrix(N):
     '''Stiffness matrix of legendre_basis(N).'''
-    # TODO 
-    pass
+    # The matrix has part of the main diagonal on every second side diagonal
+    main_diag = np.array([sum(2*(2*k+1) for k in range(0 if i%2 else 1, i, 2))
+                          for i in range(N)])
+    # Upper diagonals
+    offsets = range(0, N, 2)
+    diagonals = [main_diag[:N-offset] for offset in offsets]
+    # All diagonal
+    all_offsets = [-offset for offset in offsets[:0:-1]] + offsets
+    all_diagonals = [diagonal for diagonal in diagonals[:0:-1]] + diagonals
+
+    return diags(all_diagonals, all_offsets, shape=(N, N))
 
 
 def backward_transformation_matrix(N):
@@ -41,8 +60,8 @@ def backward_transformation_matrix(N):
     polynomials and x_j are N GL quadrature points. This matrix is used for
     backward Legendre transformation: Suppose function f is represented in 
     the wave number space by a vector F and let BL be the backward transformation
-    matrix. Then f(x_j) = F.BL[:, j] or f = F.BL, and vector f represents f in
-    the real space.
+    matrix. Then f(x_j) = F.BL[:, j] or f = F.BL or BL.T.F, and vector f 
+    represents f in the real space.
     '''
     BL = np.zeros((N, N))
     # Get points of the guadrature
@@ -63,28 +82,39 @@ class BackwardLegendreTransformation(object):
     Perform backward Legendre transformations. The transformation matrix
     is computed only once.
     '''
-    # TODO for 2d
     def __init__(self, N):
-        '''Cache the matrix.'''
-        self.__BL = backward_transformation_matrix(N)
+        '''Cache the matrices.'''
+        if not isinstance(N, list):
+            N = [N]
+        assert len(N) < 3
+        self.__BL = [backward_transformation_matrix(n) for n in N]
 
     def __call__(self, F):
         '''Transform f from wave number space to physical space.'''
-        return F.dot(self.__BL)
+        if len(self.__BL) == 1:
+            return (self.__BL[0].T).dot(F)
+        else:
+            return self.__BL[0].T.dot(F.dot(self.__BL[1]))
 
     def asarray(self):
-        '''Return the transformation matrix.'''
-        return self.__BL
+        '''
+        Return the transformation matrix. Matrix dotted with the representation
+        in wave number space yields the representation in physical space.
+        '''
+        if len(self.__BL) == 1:
+            return self.__BL[0]
+        else:
+            return np.kron(self.__BL[0].T, self.__BL[1].T)
 
 
-def forward_transformation_matrix(N, with_points=False):
+def forward_transformation_matrix(N):
     '''
-    For any function f, we define its interpolant f_N as \sum_{i=0}^N F_i * L_i,
+    For any function f, we define its interpolant f_N as \sum_{i=0}^{N-1}F_i*L_i,
     where L_i is the i-th Legendre polynomial and the coeffcients F_i are given
-    as F_i=\sum_{j=0}^n*f(xj)*w_j*L_i(x_j)/(L_i, L_i). The interpolant is thus a
-    polynomial of degree N-1. The reasoning behind the definition is that is f
-    were a polynomial of degre N-1 the integrals (f, L_i) having an integrand of
-    max degree 2N-2 would be exactly evaluated by the N-1 point GL gradrature.
+    as F_i=\sum_{j=0}^{n-1}*f(xj)*w_j*L_i(x_j)/(L_i, L_i). The interpolant is
+    thus a polynomial of degree N-1. The reasoning behind the definition is that
+    is f were a polynomial of degre N-1 the integrals (f, L_i) having an integrand
+    of max degree 2N-2 would be exactly evaluated by the N-1 point GL gradrature.
     Vector F is a representation of function f in the wave number space. 
     Computing F can be represented as matrix-vector product and is reffered to
     as a forward Legendre transformation. Here we get the
@@ -107,69 +137,85 @@ def forward_transformation_matrix(N, with_points=False):
 
         FL[i, :] = row
    
-    # Points can become handy
-    if not with_points:
-        return FL
-    else:
-        return FL, points
+    return FL
 
 
-def node_eval(N, f):
-    '''Evaluate f at nodes of N point GL quadrature.'''
-    # In general the input should be some sort of (lambda) function
-    # Sympy functions are lambdified for fast numpy evaluation
-    # Evaluate function of x, y
-    if isinstance(N, list):
-        assert len(N) == 2
-        # The evaluation points are a tensor product
-        points_x, _ = leggauss(N[0])
-        points_y, _ = leggauss(N[1])
-        points = np.array([np.array([p_x, p_y])
-                           for p_x, p_y in product(points_x, points_y)]) 
-        # Make sure we have functions of two vars
+class GLNodeEvaluation(object):
+    '''
+    Evaluate f at nodes of N point GL quadrature. The points are precomputed
+    and stored.
+    '''
+    def __init__(self, N):
+        '''Compute the evaluation points.'''
+        if not isinstance(N, list):
+            N = [N]
+
+        self.dim = len(N)
+        # This would work for any dim but since only 1d and 2d is supported in
+        # FLT and BLT I see no points in supporting it here.
+        assert self.dim < 3
+        self.shape = tuple(N)
+        # Get points for components
+        points_i = [leggauss(n)[0] for n in N] 
+        # Combine as cartesian product
+        self.points = np.array([list(pis) for pis in product(*points_i)])
+
+    def __call__(self, f):
+        '''Evaluate f at points.'''
+        # In general the input should be some sort of (lambda) function
+        # Sympy functions are lambdified for fast numpy evaluation
+        dim = self.dim
+        points = self.points
+        
+        xyz = symbols('x, y, z')
         if isinstance(f, Expr):
-            assert x in f.atoms() and y in f.atoms()
-            f = lambdify([x, y], f, 'numpy')
-            return f(points[:, 0], points[:, 1]).reshape((N[0], N[1]))
+            # Symbolic function must be defined for x, y, z
+            assert all(xi in f.atoms() for xi in xyz[:dim])
+            f = lambdify(xyz[:dim], f, 'numpy')
+            # Lambdify makes it fast if we feed as arrays the x y z comps of points
+            f_values = f(*[points[:, i] for i in range(dim)])
         else:
-            assert f.func_code.co_argcount == 2
-            return np.array([f(*p) for p in points]).reshape((N[0], N[1]))
+            # For (lambda)function I can only check the argcount
+            assert f.func_code.co_argcount == dim
+            f_values = np.array([f(*(p.tolist())) for p in points])
 
-    else:
-        # Evaluate function of x
-        points, _ = leggauss(N)
-        # Make sure we have function of x 
-        if isinstance(f, Expr):
-            assert x in f.atoms()
-            f = lambdify(x, f, 'numpy')
-            return f(points)
-        else:
-            assert f.func_code.co_argcount == 1
-            return np.array([f(p) for p in points])
+        return f_values.reshape(self.shape)
 
 
 class ForwardLegendreTransformation(object):
     '''
-    Perform forward Legendre transformations. The transformation matrix
-    is computed only once and so are the nodes for evaluation.
+    Perform forward Legendre transformations. The transformation matrices
+    are computed only once and so are the nodes for evaluation.
     '''
-    # TODO for 2d
     def __init__(self, N):
-        '''Cache the matrix.'''
-        self.__FL, self.__points = forward_transformation_matrix(N, True)
+        '''Cache the matrices.'''
+        if not isinstance(N, list):
+            N = [N]
+        assert len(N) < 3
+
+        self.__FL = [forward_transformation_matrix(n) for n in N]
+        # Make your own evaluator
+        self.__GLeval = GLNodeEvaluation(N)
 
     def __call__(self, f):
         '''Transform f to wave number space space.'''
-        if isinstance(f, Expr):
-            f = lambdify(x, f, 'numpy')
+        F = self.__GLeval(f)
 
-        F = f(self.__points)
-        return self.__FL.dot(F)
+        if len(self.__FL) == 1:
+            return self.__FL[0].dot(F)
+        else:
+            return self.__FL[0].dot(F.dot(self.__FL[1].T))
 
     def asarray(self):
-        '''Return the transformation matrix.'''
-        return self.__FL
-
+        '''
+        Return the transformation matrix. For some f the matrix dotted with
+        f evalueted at GL nodal points yield the representation in the wave
+        number space.
+        '''
+        if len(self.__FL) == 1:
+            return self.__FL[0]
+        else:
+            return np.kron(self.__FL[0], self.__FL[1])
 
 # -----------------------------------------------------------------------------
 
@@ -178,99 +224,165 @@ if __name__ == '__main__':
     from sympy.mpmath import quad
     from sympy.plotting import plot
     import matplotlib.pyplot as plt
-    from random import random
     from math import sqrt
 
-    x = Symbol('x')
-    # First a polynomial should be interpolated/projected/FL-transform exactly
-    N = 8
-    f = sum(random()*x**i for i in range(N))
-    f_ = lambdify(x, f, 'numpy')
-    
-    F = ForwardLegendreTransformation(N)(f)
-    f_N = legendre_function(F)
-    e = simplify(f-f_N)
-    assert abs(quad(lambdify(x, e**2), [-1, 1])) < 1E-15
+    test_1d = True
+    test_2d = False
 
-    # And use f_N(x_j) = f(x_j) to test BL
-    f_N_values = BackwardLegendreTransformation(N)(F)
-    f_values = node_eval(N, f)
-    # Allow some room for inexact numerics
-    assert np.all(np.abs(f_N_values - f_values) < 1E-10)
+    if test_1d:
+        x = Symbol('x')
+        # Check the stiffness matrix
+        N = 16
+        basis = legendre_basis(N)
+        A = np.zeros((N, N))
+        for i, v in enumerate(basis):
+            integrand = v.diff(x, 1)**2
+            A[i, i] = quad(lambdify(x, integrand), [-1, 1])
+            for j, u in enumerate(basis[i+1:], i+1):
+                integrand = u.diff(x, 1)*v.diff(x, 1)
+                A[i, j] = quad(lambdify(x, integrand), [-1, 1])
+                A[j, i] = A[i, j]
 
-    # Now take some `wilder` function and see how the interpolation quality
-    # improves
-    f = sin(x)*cos(pi*x**2)
-    f_ = lambdify(x, f, 'numpy')
-    
-    tol = 1E-13
-    converged = True
-    N = 1
-    N_max = 10
-    # If you had expansion as F_ coeffs for a function then its L^2 norm could
-    # be computed via the mass matrix as sqrt(F_.M.F_)
-    # Take the largest space
-    F_ = ForwardLegendreTransformation(N_max)(f_)
+        A_ = stiffness_matrix(N).toarray()
+        assert np.all(abs(A - A_) < 1E-15)
 
-    Ns, errors = [], []
-    while not converged:
-        print 'xxx', N
-        F = ForwardLegendreTransformation(N)(f_)
+        # First a polynomial should be interpolated/projected/FL-transform exactly
+        N = 8
+        f = x**7 - 4*x**5 + 1
+        f_ = lambdify(x, f, 'numpy')
+
+        F = ForwardLegendreTransformation(N)(f)
         f_N = legendre_function(F)
         e = simplify(f-f_N)
-        # Evaluare the L2 error by mpmath.quad which is adaptive and almost
-        # exact
-        error = sqrt(quad(lambdify(x, e**2), [-1, 1]))
+        assert abs(sqrt(quad(lambdify(x, e**2), [-1, 1]))) < 1E-13
+
+        # And use f_N(x_j) = f(x_j) to test BL
+        f_N_values = BackwardLegendreTransformation(N)(F)
+        f_values = GLNodeEvaluation(N)(f)
+        # Allow some room for inexact numerics
+        assert np.all(np.abs(f_N_values - f_values) < 1E-10)
+
+        # Now take some `wilder` function and see how the interpolation quality
+        # improves
+        f = sin(x)*cos(pi*x**2)
+        f_ = lambdify(x, f, 'numpy')
         
-        # We compute the L2 error by the mass matrix taking f in the same space
-        # as F_ so this is not exact, but it's interesting, right? :)
-        e_ = F - F_[:N]
-        M = mass_matrix(N)
-        error_ = sqrt(e_.dot(M.dot(e_)))
+        tol = 1E-13
+        converged = False
+        N = 1
+        N_max = 100
+        # If you had expansion as F_ coeffs for a function then its L^2 norm could
+        # be computed via the mass matrix as sqrt(F_.M.F_)
+        # Take the largest space
+        F_ = ForwardLegendreTransformation(N_max)(f_)
+
+        Ns, errors = [], []
+        while not converged:
+            F = ForwardLegendreTransformation(N)(f_)
+            f_N = legendre_function(F)
+            e = simplify(f-f_N)
+            # Evaluare the L2 error by mpmath.quad which is adaptive and almost
+            # exact
+            error = sqrt(quad(lambdify(x, e**2), [-1, 1]))
+            
+            # We compute the L2 error by the mass matrix taking f in the same space
+            # as F_ so this is not exact, but it's interesting, right? :)
+            e_ = F - F_[:N]
+            M = mass_matrix(N)
+            error_ = sqrt(e_.dot(M.dot(e_)))
+            
+            print 'N=%d L2=%.4E (mass)L2=%.4E' % (N, error, error_)
+            Ns.append(N)
+            errors.append(error)
+
+            converged = error < tol or N >= N_max
+
+            N += 1
+
+        # See how the final interpolant compares to the function
+        pf = plot(f, (x, -1, 1), show=False)
+        pf_ = plot(f_N, (x, -1, 1), show=False)
+        pf_[0].line_color='red'
+        pf.append(pf_[0])
+        pf.show()
+
+        # Plot convergence history
+        plt.figure()
+        plt.loglog(Ns, errors)
+        plt.show()
+
+
+    if test_2d:
+        x, y = symbols('x, y')
+        # First a polynomial should be interpolated/projected/FL-transform exactly
+        N, M = 3, 4
+        f = x**2 + y**3
+        f_ = lambdify([x, y], f, 'numpy')
+
+        F = ForwardLegendreTransformation([N, M])(f)
+        f_NM = legendre_function(F)
+        e = simplify(f-f_NM)
+        assert abs(sqrt(quad(lambdify([x, y], e**2), [-1, 1], [-1, 1]))) < 1E-13
+
+        # Represent FLT as object acting on vector
+        F_nodes = GLNodeEvaluation([N, M])(f_).flatten()
+        F_mat = ForwardLegendreTransformation([N, M]).asarray()
+        F_ = F_mat.dot(F_nodes)
+        assert np.all((F.flatten() - F_) < 1E-14)
+
+        # What is the error with the mass matrix?
+        mass_N = mass_matrix(N)
+        mass_M = mass_matrix(M)
+        E = ForwardLegendreTransformation([N, M])(e)
+        assert abs(sqrt(np.trace((mass_N.dot(E)).dot(mass_M.dot(E.T))))) < 1E-13
+
+        # And use f_N(x_j) = f(x_j) to test BL
+        f_NM_values = BackwardLegendreTransformation([N, M])(F)
+        f_values = GLNodeEvaluation([N, M])(f)
+        # Allow some room for inexact numerics
+        assert np.all(np.abs(f_NM_values - f_values) < 1E-10)
+
+        # Represent BLT as object acting on vector
+        F_mat = BackwardLegendreTransformation([N, M]).asarray()
+        assert np.all((f_NM_values.flatten() - F_mat.dot(F.flatten())) < 1E-14)
+
+        # Now take some `wilder` function and see how the interpolation quality
+        # improves
+        f = sin(x)*cos(2*pi*y)
+        f_ = lambdify([x, y], f, 'numpy')
         
-        print 'N=%d L2=%.4E (mass)L2=%.4E' % (N, error, error_)
-        Ns.append(N)
-        errors.append(error)
+        tol = 1E-13
+        converged = False
+        N = 2
+        N_max = 100
+        # If you had expansion as F_ coeffs for a function then its L^2 norm could
+        # be computed via the mass matrix as sqrt(F_.M.F_)
+        # Take the largest space
+        F_ = ForwardLegendreTransformation([N_max, N_max])(f_)
 
-        converged = error < tol or N >= N_max
+        Ns, errors = [], []
+        while not converged:
+            F = ForwardLegendreTransformation([N, N])(f_)
+            
+            # We compute the L2 error by the mass matrix taking f in the same space
+            # as F_ so this is not exact
+            E = F - F_[:N, :N]
+            M = mass_matrix(N)
+            
+            error = sqrt(np.trace((M.dot(E)).dot(M.dot(E.T))))
+            # Alternatively and equivalently
+            # error = sqrt(((M.dot(E))*(M.dot(E.T)).T).sum())
+            print 'N=%d (mass)L2=%.4E' % (N, error)
+            Ns.append(N)
+            errors.append(error)
 
-        N += 1
+            converged = error < tol or N >= N_max
 
-    # See how the final interpolant compares to the function
-    pf = plot(f, (x, -1, 1), show=False)
-    pf_ = plot(f_N, (x, -1, 1), show=False)
-    pf_[0].line_color='red'
-    pf.append(pf_[0])
-    # pf.show()
+            N += 1
 
-    # Plot convergence history
-    plt.figure()
-    plt.loglog(Ns, errors)
-    # plt.show()
+        # See how the final interpolant compares to the function
+        # from sympy.plotting import plot3d
 
-    # Note that for sufficiently regular function the convergence is exponential
-    # but the sin(x)*cos(pi*x**2) example shows that for exponential convergence
-    # N must be big enough
-
-    # Test the stiffness_matrix
-    # n = 6
-    # basis = legendre_basis(n)
-    # A = np.zeros((n, n))
-    # for i, v in enumerate(basis):
-    #     for j, u in enumerate(basis):
-    #         integrand = lambdify(x, u.diff(x)*v.diff(x))
-    #         A[i, j] = quad(integrand, [-1, 1])
-    # 
-    # A_ = stiffness_matrix(n)
-    # 
-    # print A
-    # print A_
-
-    f = sin(pi*x)*sin(3*pi*y)
-    print node_eval([4, 5], f)
-
-    from math import sin
-    f = lambda x, y: sin(pi*x)*sin(3*pi*y)
-    print node_eval([4, 5], f)
-
-
+        # f_N = legendre_function(F)
+        # pf = plot3d(f-f_N, (x, -1, 1), (y, -1, 1))
+        # pf.show()
