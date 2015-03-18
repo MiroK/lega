@@ -74,6 +74,7 @@ if __name__ == '__main__':
     while not converged:
         U = solve_poisson_2d(f, n)  # w.r.t to shen
 
+        #TODO: should add symbolic as well, just here and only for comparison!
         # Error using representation w.r.t to Shen basis and the mass matrix
         # Turn U from shen to Legendre
         Tmat = legendre_to_shen_matrix(n+2)
