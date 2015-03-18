@@ -32,21 +32,21 @@ def reference_mapping(domain, symbol=('x', 'y', 'z', 't')):
         a, b = domain[0]
         assert b > a, 'Degenerate interval'
 
-        L, center = (b-a)/2, (b+a)/2
+        L, center = (b-a)/2., (b+a)/2.
         # The key is x_hat -> x
         chi = (Symbol(symbol[0]), L*Symbol(symbol[0]) + center)
         # The key is x -> x_hat
         ichi = (Symbol(symbol[0]), (Symbol(symbol[0])-center)/L)
         # The idea is that these once turned into dictionaries are readily used
         # in sympy.subs
-        return chi, ichi
+        return [chi], [ichi]
     else:
         assert len(domain) <= len(symbol), 'Not enough symbols'
         chi, ichi = [], []
         for subdomain, subsymbol in zip(domain, symbol):
             sub_chi, sub_ichi = reference_mapping([subdomain], [subsymbol])
-            chi.append(sub_chi)
-            ichi.append(sub_ichi)
+            chi.append(sub_chi[0])
+            ichi.append(sub_ichi[0])
 
         return chi, ichi
 
@@ -55,13 +55,6 @@ def jacobian_matrix(chi):
     '''
     Compute symbolic Jacobian matrix of mapping chi.
     '''
-    # Handle chi that maps intervals which returns a tuple of len(2). Higher
-    # dim mappings return list to tuples
-    if isinstance(chi, tuple):
-        assert len(chi) == 2
-        chi = [chi]
-    # Now we always have list of tuples
-
     # Variables for differentation
     variables = [pair[0] for pair in chi]
     # Components of the mapping
@@ -98,8 +91,8 @@ if __name__ == '__main__':
     # Check mapping and Jacobian computation
     # 1d
     chi, ichi = reference_mapping([[-1, 1]])
-    assert chi[0] == x and chi[1] == 1.0*x
-    assert ichi[0] == x and ichi[1] == 1.0*x
+    assert chi[0][0] == x and chi[0][1] == 1.0*x
+    assert ichi[0][0] == x and ichi[0][1] == 1.0*x
     
     Jmat = jacobian_matrix(chi)
     assert Jmat == Matrix([[1.0]])
