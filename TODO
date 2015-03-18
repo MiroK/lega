@@ -17,8 +17,11 @@
   in FLT, BLT, evaluation, load vector + make sure you know the tensor properties.
   But then 3d+time is a 4d problem. That should be the ultimate target. Once this is
   in place, there should be demo for it.
-
+  
+  Isolate tests.
+  
 # Theory
+
 
 #! Maybe
   1d wave equation
