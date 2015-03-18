@@ -74,7 +74,6 @@ if __name__ == '__main__':
     while not converged:
         U = solve_poisson_2d(f, n)  # w.r.t to shen
 
-        #TODO: should add symbolic as well, just here and only for comparison!
         # Error using representation w.r.t to Shen basis and the mass matrix
         # Turn U from shen to Legendre
         Tmat = legendre_to_shen_matrix(n+2)
@@ -83,15 +82,22 @@ if __name__ == '__main__':
         E = u_leg[:n+2, :n+2] - U_leg
         # Legendre mass matrix computes the L2 error
         M = L_mass_matrix(n+2)
-        error = sqrt(np.trace((M.dot(E)).dot(M.dot(E.T))))
+        error_ = sqrt(np.trace((M.dot(E)).dot(M.dot(E.T))))
 
-        print 'n=%d {e}_2=%.4E' % (n, error)
+        if False:
+            # Symbolic representation of the error
+            uh = shen_function(U)
+            e = u - uh
+            # Get the L2 norm of error, this takes quite some time to compute
+            error = sqrt(quad(lambdify([x, y], e**2), [-1, 1], [-1, 1]))
+            print 'n=%d e_2=%.4E (mass)e_2=%.4E' % (n, error, error_)
+        else:
+            print 'n=%d (mass)e_2=%.4E' % (n, error_)
 
-        converged = error < tol or n > n_max-1
+        # Mass matrix L2 is used for stopping
+        converged = error_ < tol or n > n_max-1
         n += 1
 
-    # Plot the symbolic error
     uh = shen_function(U)
     e = u - uh
-
-    plot3d(e, (x, -1, 1), (y, -1, 1))
+    plot3d(e, (x, -1, 1), (y, -1, 1), title='error')
