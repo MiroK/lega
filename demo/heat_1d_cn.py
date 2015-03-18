@@ -162,6 +162,7 @@ if __name__ == '__main__':
             error = sqrt(quad(lambdify(x, e**2), [-1, 1]))
 
             print 'dt=1E-3/%d, n=%d, |e|_2=%.4E' % (2**i, n, error)
+	print
 
     # Plot the final numerical one againt analytical
     p0 = plot(u.subs(t, tstop), (x, -1, 1), show=False)
