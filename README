@@ -1,7 +1,11 @@
 		==========LE(gendre)-GA(lerkin)==========
-LEGA sounds almost like LEGO right? And that's the idea of this package :).
+LEGA sounds almost like LEGO, doesn't it? And that is the idea of this package.
 
-LEGA is a collection of building blocks(matrices) for implementing solvers 
-of partial differential equations based on their variational formulation and
+LEGA is a collection of building blocks(matrices) for implementing solvers of
+partial differential equations based on their variational formulation and
 Galerkin method using Legendre polynomials(or their linear combinations) as
 basis functions of the descrete function spaces.
+
+# Installation
+# Demo
+# Theory
