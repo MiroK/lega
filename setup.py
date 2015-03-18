@@ -5,7 +5,7 @@ setup(name = 'lega',
       version = '0.0.1',
       description = 'Tools for Legendre-Galerkin method',
       author = 'Miroslav Kuchta',
-      author_email = 'miroslav.kuchta@gmail.com',
+      author_email = 'mirok@math.uio.no',
       url = '',
       packages = ['lega']
 )
