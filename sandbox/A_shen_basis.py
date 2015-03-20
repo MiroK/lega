@@ -1,0 +1,48 @@
+from lega.shen_basis import shen_function, mass_matrix, stiffness_matrix,\
+    shen_basis
+from scipy.linalg import eigh
+from sympy.plotting import plot
+from sympy import Symbol
+
+# Visualize the eigenfunctions of -u'' = lmnda u in (-1, 1) with u(-1)=u(1)=0
+# Are they in some sense similar to sines(k*pi*x) and cos(k*pi/2*x) which solve
+# the problem?
+
+n = 10
+basis = shen_basis(10)
+
+# Solve the eigenvalue problem to get coeffs of the new basis
+A = stiffness_matrix(n)
+M = mass_matrix(n)
+lmbdas, V = eigh(A.toarray(), M.toarray())
+
+# Make the new basis
+Abasis = [shen_function(v) for v in V.T]
+
+print 'eigenvalues', lmbdas
+
+# Plot the basis for comparison
+x = Symbol('x')
+f_fA = iter(zip(basis, Abasis))
+
+f, fA = next(f_fA)
+p = plot(f, (x, -1, 1), show=False)
+p[0].line_color = 'red'
+p_ = plot(fA, (x, -1, 1), show=False)
+p_[0].line_color = 'blue'
+p.append(p_[0])
+
+for f, fA in f_fA:
+    p_ = plot(f, (x, -1, 1), show=False)
+    p_[0].line_color = 'red'
+    p.append(p_[0])
+
+    p_ = plot(fA, (x, -1, 1), show=False)
+    p_[0].line_color = 'blue'
+    p.append(p_[0])
+
+p.show()
+
+# Some questions, what are the approximation properties of Abasis? And how does
+# the transformation between function and its series look? And, is there a
+# clever way to get the eigenvalues and eigenvectors

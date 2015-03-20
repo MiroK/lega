@@ -1,5 +1,5 @@
 # Demo:
-  2d poisson on rectangle
+[OK]  2d poisson on rectangle
   2d poisson on rectangle with nonhomogeneous bcs
   2d poisson on rectangle with Dirichlet on top/bottom and Neumann on left/right
   2d poisson on rectangle with Dirichlet on top/bottom and periodic on left/right
@@ -7,10 +7,12 @@
   Stokes
   Stokes + Heat (such that lhs is not changed!)
   
-  1d heat with timestepping
+[OK]  1d heat with timestepping
+  1d heat with space time elements, spectral for time
+  # w/ FEniCs
   1d heat with space time elements, FEM for time, uniniform step
   1d heat with space time elements, FEM for time, nonuniform step
-  1d heat with space time elements, spectral for time
+  1d heat with space time elments, spectral time, FEM space
 
 # Blocks
   Even if we do 2d+time it can be viewed as a 3d problem. So 3d should be supported

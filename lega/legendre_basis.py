@@ -1,6 +1,6 @@
 from __future__ import division
 from numpy.polynomial.legendre import leggauss, legval
-from sympy import legendre, symbols, Expr, lambdify, Symbol
+from sympy import legendre, symbols, Expr, lambdify, Symbol, Number
 from scipy.sparse import diags
 from itertools import product
 from common import function, tensor_product
@@ -168,12 +168,19 @@ class GLNodeEvaluation(object):
         points = self.points
         
         xyz = symbols('x, y, z')
-        if isinstance(f, Expr):
-            # Symbolic function must be defined for x, y, z
-            assert all(xi in f.atoms() for xi in xyz[:dim])
+        # Constant functions
+        if isinstance(f, (Number, int, float)):
+            f_values = float(f)*np.ones(len(points))
+        # Symbolic functions
+        elif isinstance(f, Expr):
+            # Symbolic function must be have the dim-th var present
+            # FIXME:Relax this?
+            assert xyz[dim-1] in f.atoms() or isinstance(f, Number)
             f = lambdify(xyz[:dim], f, 'numpy')
-            # Lambdify makes it fast if we feed as arrays the x y z comps of points
+            # Lambdify makes it fast if we feed as arrays the x y z comps
+            # of points
             f_values = f(*[points[:, i] for i in range(dim)])
+        # Python functions/lambdas
         else:
             # For (lambda)function I can only check the argcount
             assert f.func_code.co_argcount == dim
@@ -220,14 +227,14 @@ class ForwardLegendreTransformation(object):
 # -----------------------------------------------------------------------------
 
 if __name__ == '__main__':
-    from sympy import simplify, sin, cos, pi, Symbol
+    from sympy import simplify, sin, cos, pi, Symbol, S
     from sympy.mpmath import quad
     from sympy.plotting import plot
     import matplotlib.pyplot as plt
     from math import sqrt
 
-    test_1d = True
-    test_2d = False
+    test_1d = False
+    test_2d = True
 
     if test_1d:
         x = Symbol('x')
@@ -245,6 +252,15 @@ if __name__ == '__main__':
 
         A_ = stiffness_matrix(N).toarray()
         assert np.all(abs(A - A_) < 1E-15)
+
+        # Check how NodeEval handles constants
+        f = 1
+        f_values = GLNodeEvaluation(4)(f)
+        assert np.allclose(f_values, np.ones_like(f_values))
+
+        g = S(2)
+        g_values = GLNodeEvaluation(4)(g)
+        assert np.allclose(g_values, 2*np.ones_like(g_values))
 
         # First a polynomial should be interpolated/projected/FL-transform exactly
         N = 8
