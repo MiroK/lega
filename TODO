@@ -1,7 +1,7 @@
 # Demo:
 [OK]  2d poisson on rectangle
   2d poisson on rectangle with nonhomogeneous bcs
-  2d poisson on rectangle with Dirichlet on top/bottom and Neumann on left/right
+[OK]  2d poisson on rectangle with Dirichlet on top/bottom and Neumann on left/right
   2d poisson on rectangle with Dirichlet on top/bottom and periodic on left/right
   
   Stokes
