@@ -14,13 +14,20 @@
   1d heat with space time elements, FEM for time, nonuniform step
   1d heat with space time elments, spectral time, FEM space
 
+  2d heat
+
 # Blocks
+  Chebyshev
+  Chebyshev-Shen
+
   Even if we do 2d+time it can be viewed as a 3d problem. So 3d should be supported
   in FLT, BLT, evaluation, load vector + make sure you know the tensor properties.
   But then 3d+time is a 4d problem. That should be the ultimate target. Once this is
   in place, there should be demo for it.
   
   Isolate tests.
+
+  A-basis, the eigenvalues
   
 # Theory
 
