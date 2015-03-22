@@ -92,6 +92,25 @@ def ifft(F_vec):
 
     return f_vec
 
+
+def mass_matrix(N):
+    '''
+    2N+1 x 2N+1 matrix with entries corresponding to \int_{0}^{2pi} u v where
+    u, v are from fourier basis N is a diagonal matrix. Return the diagonal
+    '''
+    # This is here just for completeness
+    return np.r_[2, np.ones(2*N)]
+
+
+def stiffness_matrix(N):
+    '''
+    2N+1 x 2N+1 matrix with entries corresponding to \int_{0}^{2pi} -u'' v where
+    u, v are from fourier basis N is a diagonal matrix. Return the diagonal.
+    '''
+    # This is here just
+    k_ = np.array([k**2 for k in range(1, N+1)])
+    return np.r_[0, k_, k_]
+
 # -----------------------------------------------------------------------------
 
 if __name__ == '__main__':
@@ -118,6 +137,29 @@ if __name__ == '__main__':
     f_vec_ = ifft(F_vec)
     assert np.allclose(f_vec, f_vec_)
 
+
+    N = 4
+    basis = fourier_basis(N)
+    
+    # Check mass matrix
+    M = np.diag(mass_matrix(N))
+    M_ = np.zeros_like(M, dtype='double')
+    for i, v in enumerate(basis):
+        M_[i, i] = quad(lambdify(x, v**2), [0, 2*pi])
+        for j, u in enumerate(basis[i+1:], i+1):
+            M_[i, j] = quad(lambdify(x, v*u), [0, 2*pi])
+            M_[j, i] = M_[i, j]
+    assert np.allclose(M, M_)
+
+    # Check stiffness matrix
+    A = np.diag(stiffness_matrix(N))
+    A_ = np.zeros_like(A, dtype='double')
+    for i, v in enumerate(basis):
+        A_[i, i] = quad(lambdify(x, -v*v.diff(x, 2)), [0, 2*pi])
+        for j, u in enumerate(basis[i+1:], i+1):
+            A_[i, j] = quad(lambdify(x, -v*u.diff(x, 2)), [0, 2*pi])
+            A_[j, i] = A_[i, j]
+    assert np.allclose(A, A_)
 
     
 
