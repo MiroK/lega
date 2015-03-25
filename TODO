@@ -2,7 +2,9 @@
 [OK]  2d poisson on rectangle
   2d poisson on rectangle with nonhomogeneous bcs
 [OK]  2d poisson on rectangle with Dirichlet on top/bottom and Neumann on left/right
-  2d poisson on rectangle with Dirichlet on top/bottom and periodic on left/right
+[..]  2d poisson on rectangle with Dirichlet on top/bottom and periodic on left/right
+      might be a good idea to first do fully FFT based solver for all periodic
+      bcs so that we understand the convergence properties
   
   Stokes
   Stokes + Heat (such that lhs is not changed!)

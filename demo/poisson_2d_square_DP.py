@@ -5,6 +5,7 @@
 # 
 # We shall combine Fourier and Shen basis
 
+from __future__ import division
 from sympy import symbols, integrate, pi, lambdify, Number
 from numpy.polynomial.legendre import leggauss 
 import scipy.sparse.linalg as sparse_la
@@ -69,7 +70,6 @@ def solve_poisson(f, n_fourier, n_shen, output):
     # acting on the Fourier basis
     # Get the k**2 terms
     kk = fourier.stiffness_matrix(n_fourier)
-    ll = fourier.mass_matrix(n_fourier)
 
     # Get Shen matrices to setup a system to be solved for each wavenumber
     M = shen.mass_matrix(n_shen)
@@ -80,11 +80,9 @@ def solve_poisson(f, n_fourier, n_shen, output):
     # Fourier x Shen
     U = np.empty((2*n_fourier+1, n_shen))
 
-    # FIXME: it is nicer if the fourier basis is fully orthonormal, then there
-    # is no need for l
-    for row, (k, l, b) in enumerate(zip(kk, ll, F)):
+    for row, (k, b) in enumerate(zip(kk, F)):
         mat = k*M + A
-        vec = shen.load_vector(b)/l
+        vec = shen.load_vector(b)
         U[row, :] = sparse_la.spsolve(mat, vec)
 
     # Make a Fourier x Shen function
@@ -109,9 +107,9 @@ def solve_poisson(f, n_fourier, n_shen, output):
             # FIXME: does not work yet
             # For pointvalues of the function need to ifft the columns and
             # blt rows
-            U = np.array([fourier.ifft(col) for col in U.T]).T
-            blt = BLT(m)
+            blt = BLT(m).T
             U = np.array([blt.dot(row) for row in U])
+            U = np.array([fourier.ifft(col) for col in U.T]).T
 
             return points, U
 
@@ -119,46 +117,57 @@ def solve_poisson(f, n_fourier, n_shen, output):
 
 if __name__ == '__main__':
     from sympy import sin, cos, Expr
+    from math import log
 
     x, y = symbols('x, y')
     # Easy 
-    u = sin(2*x)*(y**2-1)
+    # u = sin(2*x)*(y**2-1)
     # Harder for Shen
     # u = sin(pi*y)*cos(3*x)
+    # Harder for Fourier
+    u = sin(pi*y)*sin(pi*(x/2/pi)**2)
     f = get_rhs(u)
 
-    n_fourier = 4
-    n_shen = 4
-    uh = solve_poisson(f=f, n_fourier=n_fourier, n_shen=n_shen,
-                       output='shen')
+    # We will compare the solution in grid points
+    u_lambda = lambdify([x, y], u, 'numpy')
 
-    # Sympy plotting
-    if isinstance(uh, Expr):
-        from sympy.plotting import plot3d
+    n_shen = 20
+    for n_fourier in [32, 64, 128, 256, 512, 1024, 2048]: 
+        uh = solve_poisson(f=f, n_fourier=n_fourier, n_shen=n_shen,
+                           output='numpy')
 
-        plot3d(u, (x, 0, 2*pi), (y, -1, 1), title='$u$')
-        plot3d(uh, (x, 0, 2*pi), (y, -1, 1), title='$u_h$')
-        plot3d(u - uh, (x, 0, 2*pi), (y, -1, 1), title='$e$')
-    # Matplotlib
-    # FIXME: does not work yet
-    else:
-        import matplotlib.pyplot as plt
+        # Sympy plotting
+        if isinstance(uh, Expr):
+            from sympy.plotting import plot3d
 
-        points, Uh = uh
+            plot3d(u, (x, 0, 2*pi), (y, -1, 1), title='$u$')
+            plot3d(uh, (x, 0, 2*pi), (y, -1, 1), title='$u_h$')
+            plot3d(u - uh, (x, 0, 2*pi), (y, -1, 1), title='$e$')
+        # Matplotlib
+        else:
+            import matplotlib.pyplot as plt
 
-        # Compute point values of exact solution
-        n, m = 2*n_fourier, n_shen+2
-        u = lambdify([x, y], u, 'numpy')
-        U = u(points[:, 0], points[:, 1]).reshape((n,  m))
+            points, Uh = uh
 
-        print U-Uh
+            # Compute point values of exact solution
+            n, m = 2*n_fourier, n_shen+2
+            U = u_lambda(points[:, 0], points[:, 1]).reshape((n,  m))
 
-        # Get ready for plotting 
-        X = points[:, 0].reshape((n, m))
-        Y = points[:, 1].reshape((n, m))
+            error = np.linalg.norm(U-Uh)#/n/m
+            if n_fourier > 64:
+                rate = log(error/error_)/log(n_/n)
+                print 'n=%d, error=%.4E rate=%.2f' % (n_fourier, error, rate)
 
-        plt.figure()
-        plt.pcolor(X, Y, U-Uh)
-        plt.show()
+            error_ = error
+            n_ = n_fourier
 
+            # Get ready for plotting 
+            X = points[:, 0].reshape((n, m))
+            Y = points[:, 1].reshape((n, m))
 
+            plt.figure()
+            plt.pcolor(X, Y, np.abs(U-Uh))
+            plt.colorbar()
+            plt.xlim((0, 2*np.pi))
+            plt.ylim((-1, 1))
+            plt.show()

@@ -1,10 +1,11 @@
 from __future__ import division
-from sympy import sin, cos, Symbol, lambdify, Number, Expr
+from sympy import sin, cos, Symbol, lambdify, Number, Expr, S
 from common import function
 from math import sqrt, pi
 import numpy as np
 
 SQRT_PI = sqrt(pi)
+SQRT_2PI = sqrt(2*pi)
 
 
 def fourier_basis(N, symbol='x'):
@@ -18,8 +19,9 @@ def fourier_basis(N, symbol='x'):
     understood as the highest wavenumber.
     '''
     x = Symbol(symbol)
-    return [cos(k*x)/SQRT_PI for k in range(N+1)] +\
-           [sin(-k*x)/SQRT_PI for k in range(1, N+1)]
+    return [S(1)/SQRT_2PI] +\
+           [cos(k*x)/SQRT_PI for k in range(1, N+1)] +\
+           [-sin(k*x)/SQRT_PI for k in range(1, N+1)]
 
 
 def fourier_function(F_vec):
@@ -73,7 +75,8 @@ def fft(f_vec):
     F_vec = np.fft.rfft(f_vec)
     # These are the coefficient values
     n_points = len(f_vec)
-    F_vec *= 2*SQRT_PI/n_points
+    F_vec[0] *= SQRT_2PI/n_points
+    F_vec[1:] *= 2*SQRT_PI/n_points
     F_vec = np.r_[F_vec.real, F_vec.imag[1:]]
 
     return F_vec
@@ -85,7 +88,8 @@ def ifft(F_vec):
     and collapsed to complex vector.
     '''
     n_points = len(F_vec) - 1
-    F_vec /= 2.*SQRT_PI/n_points
+    F_vec[0] /= SQRT_2PI/n_points
+    F_vec[1:] /= 2*SQRT_PI/n_points
     end_real = n_points/2 + 1
     F_vec = F_vec[:end_real] + 1j*np.r_[0, F_vec[end_real:]]
     f_vec = np.fft.irfft(F_vec)
@@ -99,7 +103,7 @@ def mass_matrix(N):
     u, v are from fourier basis N is a diagonal matrix. Return the diagonal
     '''
     # This is here just for completeness
-    return np.r_[2, np.ones(2*N)]
+    return np.ones(2*N + 1)
 
 
 def stiffness_matrix(N):
@@ -131,14 +135,13 @@ if __name__ == '__main__':
     # Compare with analytical coefficients values
     basis = fourier_basis(N)
     for i, v in enumerate(basis):
-        assert abs(quad(lambdify(x, v*f), [0, 2*np.pi]) - F_vec[i]) < 1E-14
+         assert abs(quad(lambdify(x, v*f), [0, 2*np.pi]) - F_vec[i]) < 1E-14
 
     # Comming back
     f_vec_ = ifft(F_vec)
     assert np.allclose(f_vec, f_vec_)
 
-
-    N = 4
+    N = 6
     basis = fourier_basis(N)
     
     # Check mass matrix
@@ -160,13 +163,3 @@ if __name__ == '__main__':
             A_[i, j] = quad(lambdify(x, -v*u.diff(x, 2)), [0, 2*pi])
             A_[j, i] = A_[i, j]
     assert np.allclose(A, A_)
-
-    
-
-
-
-
-
-    
-
-
