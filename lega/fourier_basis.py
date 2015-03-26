@@ -24,13 +24,13 @@ def fourier_basis(N, symbol='x'):
            [-sin(k*x)/SQRT_PI for k in range(1, N+1)]
 
 
-def fourier_function(F_vec):
+def fourier_function(F):
     '''
     Return a linear combination of len(F_vec) Fourier basis functions with
     coefficients given by F_vec.
     '''
     if len(F.shape) == 1:
-        basis = fourier_basis(F.shape[0], 'x')
+        basis = fourier_basis(F.shape[0]//2, 'x')
         return function(basis, F)
     else:
         raise NotImplementedError('2d, 3d not implemented yet.')
@@ -88,6 +88,7 @@ def ifft(F_vec):
     and collapsed to complex vector.
     '''
     n_points = len(F_vec) - 1
+    F_vec = F_vec.copy()
     F_vec[0] /= SQRT_2PI/n_points
     F_vec[1:] /= 2*SQRT_PI/n_points
     end_real = n_points/2 + 1

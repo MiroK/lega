@@ -125,14 +125,14 @@ if __name__ == '__main__':
     # Harder for Shen
     # u = sin(pi*y)*cos(3*x)
     # Harder for Fourier
-    u = sin(pi*y)*sin(pi*(x/2/pi)**2)
+    u = sin(2*pi*y)*x*(x-2*pi)*(x-pi)
     f = get_rhs(u)
 
     # We will compare the solution in grid points
     u_lambda = lambdify([x, y], u, 'numpy')
 
-    n_shen = 20
-    for n_fourier in [32, 64, 128, 256, 512, 1024, 2048]: 
+    n_shen = 40
+    for n_fourier in [32, 64, 128, 256, 512, 1024, 2048, 5096]: 
         uh = solve_poisson(f=f, n_fourier=n_fourier, n_shen=n_shen,
                            output='numpy')
 
@@ -152,8 +152,11 @@ if __name__ == '__main__':
             # Compute point values of exact solution
             n, m = 2*n_fourier, n_shen+2
             U = u_lambda(points[:, 0], points[:, 1]).reshape((n,  m))
-
-            error = np.linalg.norm(U-Uh)#/n/m
+            
+            # Converges...
+            # At a fixed rate ...
+            # FIXME: make sense of that rate!
+            error = np.linalg.norm(U-Uh)/n/m
             if n_fourier > 64:
                 rate = log(error/error_)/log(n_/n)
                 print 'n=%d, error=%.4E rate=%.2f' % (n_fourier, error, rate)
@@ -161,13 +164,13 @@ if __name__ == '__main__':
             error_ = error
             n_ = n_fourier
 
-            # Get ready for plotting 
-            X = points[:, 0].reshape((n, m))
-            Y = points[:, 1].reshape((n, m))
+    # Get ready for plotting 
+    X = points[:, 0].reshape((n, m))
+    Y = points[:, 1].reshape((n, m))
 
-            plt.figure()
-            plt.pcolor(X, Y, np.abs(U-Uh))
-            plt.colorbar()
-            plt.xlim((0, 2*np.pi))
-            plt.ylim((-1, 1))
-            plt.show()
+    plt.figure()
+    plt.pcolor(X, Y, np.abs(U-Uh))
+    plt.colorbar()
+    plt.xlim((0, 2*np.pi))
+    plt.ylim((-1, 1))
+    plt.show()
