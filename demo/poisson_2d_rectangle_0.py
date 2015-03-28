@@ -65,9 +65,13 @@ def solve_poisson_2d(f, n, domain):
     bb = (V.T).dot(b.dot(V))
 
     # Apply the inverse in eigen space
-    U_ = np.array([[bb[i, j]/(Gx*lmbda[i] + Gy*lmbda[j])
-                    for j in range(n)]
-                    for i in range(n)])
+    I = Gx*np.tile(lmbda, (n, 1)).T+ Gy*np.tile(lmbda, (n, 1))
+    U_ = bb/I
+
+    # Or element by element
+    # U_ = np.array([[bb[i, j]/(Gx*lmbda[i] + Gy*lmbda[j])
+    #                for j in range(n)]
+    #                for i in range(n)])
     # Map back to physical space
     U = (V).dot(U_.dot(V.T))
 
