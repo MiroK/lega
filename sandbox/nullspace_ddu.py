@@ -45,7 +45,7 @@ def get_problem(f, u=None):
         return get_problem(f, u)
 
     # Check the solution properties
-    assert -u.diff(x, 2) - (f - integrate(f*z, (x, -1, 1))*z) == 0
+    assert abs(-u.diff(x, 2) - (f - integrate(f*z, (x, -1, 1))*z)).n() < 1E-15
     assert abs(u.diff(x, 1).subs(x, -1)) < 1E-15
     assert abs(u.diff(x, 1).subs(x, 1)) < 1E-15
     assert abs(integrate(u*z, (x, -1, 1))) < 1E-15
@@ -110,6 +110,12 @@ def projection_solver(f, n, projection='L2'):
     M = leg.mass_matrix(n)
     b = M.dot(F)
 
+    # Nullspace vector basis representation
+    Z = np.r_[1/m_sqrt(2), np.zeros(n-1)]
+    PP = np.eye(n) - np.outer(Z, leg.mass_matrix(n).dot(Z))
+    print PP.dot(A) - A.dot(PP)
+    # FIXME: do we have trouble because A and P commute?
+
     if projection == 'l2':
         P = np.eye(n)[1:, :]
     else:
@@ -127,15 +133,15 @@ def projection_solver(f, n, projection='L2'):
 # -----------------------------------------------------------------------------
 
 if __name__ == '__main__':
-    from sympy import sin, pi, lambdify
+    from sympy import sin, pi, lambdify, simplify
     from sympy.mpmath import quad
     from math import sqrt as m_sqrt
 
     x = Symbol('x')
-    f = x*sin(2*pi*x)
+    f = 1 + sin(2*pi*x)
     f, u = get_problem(f=f)
-    n = 20
-    print 'u', u
+    n = 4
+    print 'u', simplify(u)
     print 'f', f
 
     # Nullspace vector basis representation

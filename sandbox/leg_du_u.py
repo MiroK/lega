@@ -32,8 +32,8 @@ def get_solution(u=None, f=None):
     return u, f
 
 x = Symbol('x')
-from sympy import sin, pi
-f = sin(pi*x) #x  #S(1)
+from sympy import sin, pi, cos
+f = 1 + cos(2*pi*x) #x  #S(1)
 uu, ff = get_solution(f=f)
 print 'u, f', uu, ff
 
