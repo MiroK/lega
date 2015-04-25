@@ -138,7 +138,7 @@ if __name__ == '__main__':
     from math import sqrt as m_sqrt
 
     x = Symbol('x')
-    f = 1 + sin(2*pi*x)
+    f = sin(2*pi*x)
     f, u = get_problem(f=f)
     n = 4
     print 'u', simplify(u)
