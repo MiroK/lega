@@ -91,7 +91,7 @@ def stiffness_matrix(n):
 
 def bending_matrix(n):
     '''Bending matrix of n functions from Shen's basis: (f``, g``).'''
-    return eye(n)
+    return eye(n, dtype=float)
 
 
 def legendre_to_shen_cb_matrix(m):
@@ -127,12 +127,21 @@ def load_vector(F):
     vector can be computed as T.dot(M.dot(F)), i.e. integrate in legendre basis
     and come back to Shen.
     '''
-    n_leg = len(F)
-    n_shen = n_leg - 4
-    assert n_shen > 0
-    M_leg = legendre_basis.mass_matrix(n_leg)
-    T = legendre_to_shen_cb_matrix(n_leg)
-    return T.dot(M_leg.dot(F))
+    # 1d
+    if F.shape == (len(F), ):
+        n_leg = len(F)
+        n_shen = n_leg - 4
+        assert n_shen > 0
+        M_leg = legendre_basis.mass_matrix(n_leg)
+        T = legendre_to_shen_cb_matrix(n_leg)
+        return T.dot(M_leg.dot(F))
+    # 2d
+    else:
+        assert len(F.shape) == 2
+        b = np.array([load_vector(colF) for colF in F.T])
+        b = np.array([load_vector(rowb) for rowb in b.T])
+
+        return b
 
 # -----------------------------------------------------------------------------
 
