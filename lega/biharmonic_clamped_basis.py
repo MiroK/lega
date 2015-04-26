@@ -159,7 +159,7 @@ if __name__ == '__main__':
                 v.diff(x, 1).subs(x, -1).n(), v.diff(x, 1).subs(x, -1).n()]
         assert all(v < 1E-15 for v in map(abs, vals))
 
-    # Test bcs by checking bending matrix
+    # Test bending matrix
     mat_value = lambda u, v: quad(lambdify(x, u.diff(x, 2)*v.diff(x, 2)), [-1, 1])
 
     mat = np.zeros((len(basis), len(basis)))

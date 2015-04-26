@@ -35,11 +35,11 @@ def get_problem(f):
     u += a*x**3/6 + b*x**2/2 + c*x + d
 
     # Check that it is the solution
-    print abs(u.evalf(subs={x: -1}))
-    print abs(u.evalf(subs={x: 1}))
-    print abs(u.diff(x, 1).evalf(subs={x: -1}))
-    print abs(u.diff(x, 1).evalf(subs={x: 1}))
-    print (simplify(u.diff(x, 4)) - f)
+    assert abs(u.evalf(subs={x: -1})) < 1E-15
+    assert abs(u.evalf(subs={x: 1})) < 1E-15
+    assert abs(u.diff(x, 1).evalf(subs={x: -1})) < 1E-15
+    assert abs(u.diff(x, 1).evalf(subs={x: 1})) < 1E-15
+    assert integrate((u.diff(x, 4) - f)**2, (x, -1, 1)) < 1E-15
 
     return u, f
 
