@@ -44,6 +44,7 @@ def solve_poisson_2d(f, n, n_fft):
 
 if __name__ == '__main__':
     from lega.sine_basis import sine_function, sine_eval, sine_fft
+    from lega.integration import Quad2d
     from sympy.mpmath import quad
     from math import sqrt, log as ln
     import matplotlib.pyplot as plt
@@ -66,6 +67,8 @@ if __name__ == '__main__':
     Uvec = sine_eval(N=[n_fft, n_fft], f=u)
     Uk = sine_fft(Uvec)
 
+    Q2 = Quad2d(200)
+
     ns = []
     errors = []
     while not converged:
@@ -78,6 +81,11 @@ if __name__ == '__main__':
         E_k = Uk[:n_rows, :n_cols] - Uh_k
         error = np.linalg.norm(E_k)/n_rows/n_cols
         # print '\terror', time.time() - start
+        
+        # Proper L^2 norm
+        # uh = sine_function(Uh_k)
+        # e = u - uh
+        # error = sqrt(Q2(e**2, [0, pi.n()], [0, pi.n()]))
 
         if n != 2:
             ns.append(n)

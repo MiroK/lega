@@ -10,6 +10,7 @@ from sympy import pi, lambdify
 import lega.sine_basis as sine
 import numpy as np
 
+# FIXME: we have a but somewhere ...
 
 def solve_2d(f, n, n_fft):
     '''Solve the biharmonic problem by nxn sine polynomials.'''
