@@ -5,7 +5,7 @@
 from __future__ import division
 from sympy import Symbol
 from lega.sine_basis import mass_matrix, stiffness_matrix, load_vector
-from lega.sine_basis import sine_eval, fft
+from lega.sine_basis import sine_eval, sine_fft
 import scipy.sparse.linalg as la
 from math import pi as Pi
 import numpy as np
@@ -36,7 +36,7 @@ def solve_helmholtz_1d(f, k, n):
     b = load_vector(f, n)
     # Try some frequency
     # F = sine_eval(8192, f)
-    # bb = fft(F)[:n]
+    # bb = sine_fft(F)[:n]
     # print 2**n, '>>>', np.linalg.norm(b-bb)
 
     # The system is (A + k*M)*U = bb
@@ -81,7 +81,7 @@ if __name__ == '__main__':
 
         # Error by FFT
         Evec = sine_eval(f=e, N=2**16)
-        e_k = fft(Evec)
+        e_k = sine_fft(Evec)
         # Use parseval
         error_ = sqrt(np.sum(e_k**2))
 

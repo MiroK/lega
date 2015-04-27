@@ -1,9 +1,10 @@
 from __future__ import division
-from sympy import sin, sqrt, pi, Number, Expr, Symbol, lambdify
-from common import function
+from sympy import sin, sqrt, pi, Number, Expr, Symbol, lambdify, symbols
+from common import function, tensor_product
 from scipy.sparse import eye, diags
 from math import pi as PI, sqrt as Sqrt
 from sympy.mpmath import quad
+from itertools import product
 import numpy as np
 
 SQRT_PI = Sqrt(pi)
@@ -28,8 +29,18 @@ def sine_function(F):
     if len(F.shape) == 1:
         basis = sine_basis(F.shape[0], 'x')
         return function(basis, F)
+
+    elif len(F.shape) == 2:
+        basis_x = sine_basis(F.shape[0], 'x')
+        basis_y = sine_basis(F.shape[1], 'y')
+        basis = tensor_product([basis_x, basis_y])
+
+        # Collapse to coefs by row
+        F = F.flatten()
+        return function(basis, F)
+
     else:
-        raise NotImplementedError('2d, 3d not implemented yet.')
+        raise NotImplementedError
 
 
 def mass_matrix(n):
@@ -47,60 +58,118 @@ def bending_matrix(n):
     return diags(np.arange(1, n+1)**4, 0, shape=(n, n))
 
 
+# Suppose we have V_n = sine_basis(n) and for some function f we want to compute
+# (f, v) for v in V_n, where (o, o) is the L^2 inner product over [0, pi].
+# The idea is that if f is extended oddly to [0, 2*pi] then all the terms (f, v)
+# can be computed at once by fft.
+#
+# The flow is eval -> (extend -> fft) -> (take only imag or results = sines)
+
+
 def sine_eval(N, f):
     '''
-    Let N the highest wavenumber to be considered in the sine series for f.
-    In order to get Fourier coefficients of f with some accuracy the function
-    must be avaluated in a least 2*N points.
+    Sample f in N+1 points from the interval [0, 2*pi). Or the cartesian product
+    of this interval
     '''
-    points = np.linspace(0, 2*PI, 2*N, endpoint=False)
+    # Symbolic is evaluated in [0, PI]
+    assert isinstance(f, (Expr, Number))
+    # 1d
+    if isinstance(N, int):
+        points = np.linspace(0, 2*PI, 2*N, endpoint=False)[:N]
 
-    if isinstance(f, (Number, int, float)):
-        f_values = float(f)*np.ones(len(points))
-        f_pi = float(f)
-    # Symbolic functions
-    elif isinstance(f, Expr):
         x = Symbol('x')
-        assert x in f.atoms() or isinstance(f, Number)
-        f = lambdify(x, f, 'numpy')
-        # Lambdify makes it fast if we feed as arrays the x y z comps
-        # of points
-        f_values = f(points)
-        f_pi = f(PI)
-    # Python functions/lambdas
+        flambda = lambdify(x, f, 'numpy')
+        f_values = flambda(points)
+
+        return f_values
+    # 2d
+    elif hasattr(N, '__len__'):
+        assert len(N) == 2
+        X = np.linspace(0, 2*PI, 2*N[0], endpoint=False)[:N[0]]
+        Y = np.linspace(0, 2*PI, 2*N[1], endpoint=False)[:N[1]]
+        # X and Y coordinates of the tensor product
+        XY = np.array([list(xy) for xy in product(X, Y)])
+        X, Y = XY[:, 0], XY[:, 1]
+
+        x, y = symbols('x, y')
+        flambda = lambdify([x, y], f, 'numpy')
+        f_values = flambda(X, Y)
+
+        return f_values.reshape(N)
+
+
+def sine_fft(f_vec):
+    '''
+    Get sine expansion coeffs of f sampled at [0, Pi] and extended oddly ... .
+    '''
+    # 1d
+    if f_vec.shape == (len(f_vec), ):
+        N = len(f_vec)-1
+        f_vec = np.r_[f_vec, f_vec[0], -f_vec[1:][::-1]]
+
+
+        F_vec = np.fft.rfft(f_vec)
+        # These are the coefficient values
+        n_points = len(f_vec)
+        F_vec[1:] *= -2./n_points/Sqrt(2/PI)
+        
+        return F_vec.imag[1:]
+    #2d
+    elif len(f_vec.shape) == 2:
+        # Do sine_fft on rows
+        for i, row in enumerate(f_vec):
+            f_vec[i, :] = sine_fft(row)
+
+        # Do sine_fft on cols
+        for j, col in enumerate(f_vec.T):
+            f_vec[:, j] = sine_fft(col)
+
+        return f_vec
+
+
+def load_vector(f, n, use_fft=False, n_fft=None):
+    '''(f, v) for v in sine basis(n).'''
+    # Compute the integral by numeric/symbolic integration
+    if not use_fft: 
+        # 1d
+        if isinstance(n, int):
+            x = Symbol('x')
+            return np.array([quad(lambdify(x, f*v), [0, PI])
+                             for v in sine_basis(n)], dtype=float)
+        
+        # 2d
+        elif hasattr(n, '__len__'):
+            assert len(n) == 2, 'Only 2d'
+            # Basis in 2d is a tensor product of basis in each directions
+            basis_x = sine_basis(n[0], 'x')
+            basis_y = sine_basis(n[1], 'y')
+            basis = tensor_product([basis_x, basis_y])
+
+            x, y = symbols('x, y')
+            return np.array([quad(lambdify([x, y], f*v), [0, PI], [0, PI])
+                             for v in basis], dtype=float).reshape(n)
+
+    # Integral by fft only approximate!
     else:
-        # For (lambda)function I can only check the argcount
-        assert f.func_code.co_argcount == 1
-        f_values = np.array([f(*(p.tolist())) for p in points])
-        f_pi = f(PI)
+        assert n_fft is not None
+        # 1d
+        if isinstance(n, int):
+            # If f is constant this is the minimal requirement for sensible results
+            assert n_fft >= n
 
-    # Periodically extend
-    # FIXME: Does it really need to be this ugly?
-    f_values = np.r_[f_values[:N], f_pi, -f_values[1:N][::-1]]
+            f_vec = sine_eval(n_fft, f)
+            F_vec = sine_fft(f_vec)[:n]
 
-    return f_values
+            return F_vec
+        # 2d
+        elif hasattr(n, '__len__'):
+            assert len(n) == 2, 'Only 2d'
 
+            f_vec = sine_eval([n_fft, n_fft], f)
+            F_vec = sine_fft(f_vec)[:n[0], :n[1]]
 
-def fft(f_vec):
-    '''
-    If f was sapled in 2*N points we can construct a series with highest
-    frequency N that has 2*N+1 terms. To get its coefficients we take a
-    DFFT of f_vec this is N+1 complex values. The real part is proportional to
-    the N+1 coeffs for cosines, while the imaginary part is related to the N
-    coefficients of sines.
-    '''
-    F_vec = np.fft.rfft(f_vec)
-    # These are the coefficient values
-    n_points = len(f_vec)
-    F_vec[1:] *= -2./len(f_vec)/Sqrt(2/PI)
+            return F_vec
 
-    return F_vec.imag[1:]
-
-
-def load_vector(f, n):
-    '''(f, v) for v in sine basis(n)'''
-    x = Symbol('x')
-    return np.array([quad(lambdify(x, f*v), [0, PI]) for v in sine_basis(n)])
 
 # -----------------------------------------------------------------------------
 
@@ -156,17 +225,44 @@ if __name__ == '__main__':
     assert np.allclose(B.toarray(), mat)
 
     # Check load vector by FFT
+    f = x*(x-pi)
     # f = sin(x) + 7*sin(2*x) - sin(4*x)  # Exact
-    f = sin(x)*cos(2*pi*x)*exp(x**2)
+    # f = sin(x)*cos(2*pi*x)*exp(x**2)
+    # f = exp(x)*(sum(i*x**i for i in range(1, 4)))
     load_exact = np.array([quad(lambdify(x, f*v), [0, PI]) for v in basis],
                            dtype=float)
+   
+    b = load_vector(f, len(basis))
+    b_ = load_vector(f, len(basis), use_fft=True, n_fft=2**14)
+    print '1d error', np.linalg.norm(b - b_)
+
+    # y = Symbol('y')
+    # g = sin(x)*(y**2-1)
+    # print load_vector(g, [2, 2])
+    # # How many sines you need to get the n integrals in the load vector right
+    # N = n
+    # for k in range(1, 11):
+    #     f_vec = sine_eval(N, g)
+    #     load_num = sine_fft(f_vec)[:n] 
+    #  
+    #     print N, np.linalg.norm(load_exact - load_num)
+    #     N *= 2
+
+    # y = Symbol('y')
+    # f = sin(x)*sin(y)
+    # sine_eval(N=[4, 4], f=f)
+
+    x, y = symbols('x, y')
+    f = x*(x-pi)*y*(y-pi)*sin(x)
+
+    import time
     
-    # How many sines you need to get the n integrals in the load vector right
-    N = n
-    for k in range(1, 11):
-        f_vec = sine_eval(N, f)
-        load_num = fft(f_vec)[:n] 
+    start = time.time()
+    b = load_vector(f, [5, 5])
+    print 'QUAD', time.time() - start
 
-        print N, np.linalg.norm(load_exact - load_num)
-        N *= 2
+    start = time.time()
+    b_ = load_vector(f, [5, 5], use_fft=True, n_fft=64)
+    print 'FFT', time.time() - start
 
+    print '2d error', np.linalg.norm(b - b_)
