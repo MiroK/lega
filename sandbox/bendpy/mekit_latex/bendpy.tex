@@ -1,0 +1,66 @@
+\documentclass{marine_2015}
+     
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+
+\newcommand{\Amat}{\ensuremath{\mathbb{A}}}
+\newcommand{\Bmat}{\ensuremath{\mathbb{B}}}
+\newcommand{\bvec}{\ensuremath{\mathbf{b}}}
+\newcommand{\uvec}{\ensuremath{\mathbf{u}}}
+\newcommand{\RM}{\ensuremath{RM}}
+\newcommand{\inner}[2]{\ensuremath{\left(#1, #2\right)}}
+\newcommand{\Vh}{\ensuremath{\mathcal{V}_h}}
+\newcommand{\tuple}[2]{\ensuremath{\left[#1, #2\right]}}
+\newcommand{\ainner}[2]{\ensuremath{a\left(#1, #2\right)}}
+\newcommand{\norm}[1]{\ensuremath{\left\|#1\right\|}}
+
+% FIXME remove
+\usepackage{xcolor}
+
+\title{
+  BEND$\left(\text{P}\right|$Y: PYTHON FRAMEWORK FOR COMPUTING BENDING OF COMPLEX PLATE-BEAM SYSTEMS
+}
+
+\author{MIKAEL MORTENSEN$^{1, 2}$ AND MIROSLAV KUCHTA$^{1}$ AND KENT-ANDRE MARDAL$^{1, 2}$ }
+
+\heading{Mikael Mortensen, Miroslav Kuchta and Kent-Andre Mardal}
+
+\address{$^{1}$
+Department of Mathematics, Division of Mechanics, University of Oslo,\\
+0316 Oslo, Norway
+  \and
+$^{2}$ 
+Center for Biomedical Computing, Simula Research Laboratory,\\
+P.O. Box 134, No-134 Lysaker, Norway
+}
+
+\keywords{TODO}
+
+\abstract{
+We present a light-weight Python module for computing small deformations of a 
+single plate supported by an arbitrary number of possibly intersecting
+stiffeners,
+whose shape need not to be linear. We show how the problem fits into the
+framework 
+of abstract saddle point problems and how this abstraction can be exploited for
+clean design of the code. We discuss properties of the resulting linear system
+for two different sets of basis functions, namely, the eigenfunctions of the 
+biharmonic operator and specialized Legendre polynomials.
+}
+
+\begin{document}
+
+% Introduction ?
+
+% Equations, Each beam by map, how it goes to saddle. Galerkin discretization->
+% assembly matrices...
+
+% Discussion on properties of basis. Some speedup with FFT
+
+% Eigenvalue problems related to LBB, do both?
+
+% Preconditioning
+
+\end{document}
