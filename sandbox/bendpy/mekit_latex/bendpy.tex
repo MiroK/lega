@@ -13,8 +13,15 @@
 \newcommand{\inner}[2]{\ensuremath{\left(#1, #2\right)}}
 \newcommand{\Vh}{\ensuremath{\mathcal{V}_h}}
 \newcommand{\tuple}[2]{\ensuremath{\left[#1, #2\right]}}
+
 \newcommand{\ainner}[2]{\ensuremath{a\left(#1, #2\right)}}
+\newcommand{\binner}[2]{\ensuremath{b\left(#1, #2\right)}}
+\newcommand{\Linner}[1]{\ensuremath{L\left(#1\right)}}
+
 \newcommand{\norm}[1]{\ensuremath{\left\|#1\right\|}}
+\newcommand{\vvec}[1]{\ensuremath{\pmb{#1}}}
+\newcommand{\deriv}[2]{\ensuremath{\frac{\mathrm{d}#1}{\mathrm{d}#2}}}
+\newcommand{\tderiv}[2]{\ensuremath{\tfrac{\mathrm{d}#1}{\mathrm{d}#2}}}
 
 % FIXME remove
 \usepackage{xcolor}
@@ -40,22 +47,125 @@ P.O. Box 134, No-134 Lysaker, Norway
 
 \abstract{
 We present a light-weight Python module for computing small deformations of a 
-single plate supported by an arbitrary number of possibly intersecting
-stiffeners,
+single plate supported by an arbitrary number of possibly intersecting stiffeners,
 whose shape need not to be linear. We show how the problem fits into the
-framework 
-of abstract saddle point problems and how this abstraction can be exploited for
-clean design of the code. We discuss properties of the resulting linear system
-for two different sets of basis functions, namely, the eigenfunctions of the 
-biharmonic operator and specialized Legendre polynomials.
+framework of abstract saddle point problems and how this abstraction can be 
+exploited for clean design of the code. We discuss properties of the resulting 
+linear system for two different sets of basis functions, namely, the eigenfunctions
+of the biharmonic operator and specialized Legendre polynomials.
 }
 
 \begin{document}
 
-% Introduction ?
+\section{Introduction}
+Some ideas that could go here
+\begin{itemize}
+  \item Solving biharmonic with FEM requires $C^1$ elements, not so easy.
+    Therefore mixed formulations are more common but this leads to larger
+    systems.
+  \item Why Python - suitable for large scale (Oasis, spectralDNS, etc) but ease
+    of implementation together with abundance of libraries (sympy, numpy) make
+    it a great tool for exploration. This is what BendPy does.
+  \item Question that we are asking is which of basis is better == numerically
+    stable + convergence. Simple domains. Indication of suitable preconditioner.
+  \item outline
+\end{itemize}
 
-% Equations, Each beam by map, how it goes to saddle. Galerkin discretization->
-% assembly matrices...
+\section{The math}
+Let $\mathcal{I}$ denote a nonempty interval. As we are in the following
+interested in domains that have a Cartesian product structure we consider without
+loss of generality $\Omega=\mathcal{I}\times\mathcal{I}$. We shall refer to this
+domain as \textit{plate}. Further let $w_i, i=1, 2,\cdots, k$ be a set of curves 
+$w_i=\left\{\vec{x}\in\Omega, \vec{x}=\vec{F}_i\left(s\right),
+s\in\mathcal{I}\right\}$, where $\vec{F_i}$ is a smooth invertible mapping with
+Jacobian $J_i>0$ that additionally satisfies $\vec{F}_i\left(s_0\right),
+\vec{F}_i\left(s_1\right)\in\partial\Omega$ and
+$\vec{F}_i\left(s_0\right) \neq \vec{F}_i\left(s_1\right)$ for $s_0, s_1$ the
+endpoints of interval $\mathcal{I}$. These curves, and occasionally the
+respected mappings are referred to as \textit{beams}. In this paper we are for the
+most part concerned with straight/linear beams, that is, we consider mappings
+$\vec{F}_i\left(s\right)=\vec{P}_i\tfrac{s_1-s}{s_1-s_0}+\vec{Q}_i\tfrac{s_0-s}{s_0-s_1}$
+determined by pairs of mutually distinct points $\vec{P}_i, \vec{Q}_i$ which
+are located on the boundary of the plate. Note that in this case
+$J_i=\tfrac{\left|\vec{P}_i-\vec{Q}_i\right|}{2}$.
+
+With these assumptions on geometry we let $V, \hat{V}_i, i=1, 2, \cdots, k$ denote
+spaces of functions that map respectively the plate and the beams to real
+numbers. By invertibility of $\vec{F}_i$ each function space $\hat{V}_i$ can be
+associated with a function space that $V_{i}$ that maps the reference interval
+$\mathcal{I}$ to real numbers. Indeed for $v\in V_i$ function
+$\hat{v}=v\circ\vec{F}_i$ belongs to $\hat{V}_i$.
+
+Let $u\in V, u_i\in V_i, i=1, 2, \cdots, k$ and consider the problem of
+minimizing the Lagrangian
+\[
+  \mathcal{L}\left(u, u_1, u_2, \cdots, u_k\right)=
+  \frac{E}{2}\displaystyle\int_{\Omega}\Delta u\,\Delta u+
+  \sum_i\frac{E_i}{2}\int_{\mathcal{I}}
+  \deriv{^2u_i}{s^2}\deriv{^2u_i}{s^2}J_i^3
+  -\displaystyle\int_{\Omega}f u
+\]
+subjected to $k$ constraints
+$T(u)=u_i$, here $T(u)$ is a short hand for the composition of trace and the
+pullback inverse.\textit{explain the constraint, trace, Sobolev?}.
+We build the constraint into the Lagrangian. To this end consider spaces $Q_i$
+and functions (Lagrange multipliers) $\lambda_i\in Q_i$. Moreover let
+$Q=Q_0\times Q_1\times\cdots\times Q_k$ and $\vvec{\lambda}\in
+Q,\vvec{\lambda}_i=\lambda_i$ and a problem
+\[
+  \mathcal{L}\left(u, u_1, u_2, \cdots, u_k;\vvec{\lambda}\right)=
+   \frac{E}{2}\displaystyle\int_{\Omega}\Delta u\,\Delta u+
+  \sum_i\frac{E_i}{2}\int_{\mathcal{I}} \deriv{^2u_i}{s^2}\deriv{^2u_i}{s^2}J_i^3
+  -\displaystyle\int_{\Omega}f u - \sum_i\int_{\mathcal{I}}\left(u-u_i\right)\lambda_i J_i
+\]
+The necessary condition for extrema are then
+\[
+  \begin{aligned}
+    E\displaystyle\int_{\Omega}\Delta u\,\Delta v- \sum_i\int_{\mathcal{I}}v\lambda_i J_i
+    &=\displaystyle\int_{\Omega}f v\quad\forall v\in V& \\
+  E_i\displaystyle\int_{\mathcal{I}} \deriv{^2u_i}{s^2}\deriv{^2v_i}{s^2}J_i^3 +
+  \int_{\mathcal{I}} u_i \lambda_i J_i &= 0\quad\forall v_i\in V_i&\\
+  \int_{\mathcal{I}}\left(u_i-u\right)\mu_i J_i &= 0\quad\forall \mu_i\in Q_i&\\
+  \end{aligned}
+\]
+Under additional regularity we can make Euler Lagrange equations
+\[
+  \begin{aligned}
+    E\Delta^2u &= f\quad\text{ in }\Omega\\
+    E_i\deriv{^4 u_i}{s^4} &= 0\quad\text{ on }\mathcal{I}\\
+    u &= u_i\quad\text{ on }\mathcal{I}\\
+  \end{aligned}
+\]
+subjected to boundary conditions $u=0, \partial_nu=0$ and $u_i=0, \tderiv{u_i}{s}=0$
+$u=0, \Delta u=0$ and $u_i=0, \tderiv{^2u_i}{s^2}=0$. \textit{What are these called?}
+Abstract saddle $V:=V\times V_1, \times V_2, \cdots, \times V_k$,
+$V\ni\vvec{u}=\left(u, u_1, u_2, \cdots, u_k\right)$ and define bilinear form
+$a:V\times V\mapsto\mathbb{R}$ as
+\[
+  \ainner{\vvec{u}}{\vvec{v}} = 
+  E\displaystyle\int_{\Omega}\Delta u\,\Delta+
+  \sum_iE_i\displaystyle\int_{\mathcal{I}} \deriv{^2u_i}{s^2}\deriv{^2v_i}{s^2}J_i^3
+\]
+$b:V\times Q\mapsto\mathbb{R}$ as
+\[
+  \binner{\vvec{v}}{\vvec{\lambda}} = 
+  \int_{\mathcal{I}}\left(v_i-v\right)\lambda_i J_i
+\]
+Finally linear form
+$L:V\mapsto\mathbb{R}$ as
+\[
+  \displaystyle\int_{\Omega}f v
+\]
+%FIXME it is much better to use V_0 and then V...
+% Saddle
+Then the problem becomes simply: Find $\vvec{u}\in V, \vvec{\lambda}\in Q$ such
+that $\ainner{u}{v}+\binner{v}{\lambda}+\binner{u}{\mu}=\Linner{v}$ for all 
+$\vvec{v}\in V, \vvec{\mu}\in Q$. You have babuska theory that gives you
+continuous existence. Don't go there... Discrete mention Stokes taylor hood, or
+the compatibility condition from spectral.
+% Galerkin
+
+% Matrices
 
 % Discussion on properties of basis. Some speedup with FFT
 
