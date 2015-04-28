@@ -11,12 +11,13 @@
 \newcommand{\uvec}{\ensuremath{\mathbf{u}}}
 \newcommand{\RM}{\ensuremath{RM}}
 \newcommand{\inner}[2]{\ensuremath{\left(#1, #2\right)}}
-\newcommand{\Vh}{\ensuremath{\mathcal{V}_h}}
 \newcommand{\tuple}[2]{\ensuremath{\left[#1, #2\right]}}
 
 \newcommand{\ainner}[2]{\ensuremath{a\left(#1, #2\right)}}
 \newcommand{\binner}[2]{\ensuremath{b\left(#1, #2\right)}}
 \newcommand{\Linner}[1]{\ensuremath{L\left(#1\right)}}
+\newcommand{\Vh}{\ensuremath{V_{\mathbf{n}}}}
+\newcommand{\Qh}{\ensuremath{Q_{\mathbf{m}}}}
 
 \newcommand{\norm}[1]{\ensuremath{\left\|#1\right\|}}
 \newcommand{\vvec}[1]{\ensuremath{\pmb{#1}}}
@@ -88,7 +89,10 @@ $\vec{F}_i\left(s\right)=\vec{P}_i\tfrac{s_1-s}{s_1-s_0}+\vec{Q}_i\tfrac{s_0-s}{
 determined by pairs of mutually distinct points $\vec{P}_i, \vec{Q}_i$ which
 are located on the boundary of the plate. Note that in this case
 $J_i=\tfrac{\left|\vec{P}_i-\vec{Q}_i\right|}{2}$.
-
+% you do linear so absorb jacobian into material!!! KISS
+%
+%
+%
 With these assumptions on geometry we let $V, \hat{V}_i, i=1, 2, \cdots, k$ denote
 spaces of functions that map respectively the plate and the beams to real
 numbers. By invertibility of $\vec{F}_i$ each function space $\hat{V}_i$ can be
@@ -102,7 +106,7 @@ minimizing the Lagrangian
   \mathcal{L}\left(u, u_1, u_2, \cdots, u_k\right)=
   \frac{E}{2}\displaystyle\int_{\Omega}\Delta u\,\Delta u+
   \sum_i\frac{E_i}{2}\int_{\mathcal{I}}
-  \deriv{^2u_i}{s^2}\deriv{^2u_i}{s^2}J_i^3
+  \deriv{^2u_i}{s^2}\deriv{^2u_i}{s^2}J_i^{-3}
   -\displaystyle\int_{\Omega}f u
 \]
 subjected to $k$ constraints
@@ -115,7 +119,8 @@ Q,\vvec{\lambda}_i=\lambda_i$ and a problem
 \[
   \mathcal{L}\left(u, u_1, u_2, \cdots, u_k;\vvec{\lambda}\right)=
    \frac{E}{2}\displaystyle\int_{\Omega}\Delta u\,\Delta u+
-  \sum_i\frac{E_i}{2}\int_{\mathcal{I}} \deriv{^2u_i}{s^2}\deriv{^2u_i}{s^2}J_i^3
+  \sum_i\frac{E_i}{2}\int_{\mathcal{I}}
+  \deriv{^2u_i}{s^2}\deriv{^2u_i}{s^2}J_i^{-3}
   -\displaystyle\int_{\Omega}f u - \sum_i\int_{\mathcal{I}}\left(u-u_i\right)\lambda_i J_i
 \]
 The necessary condition for extrema are then
@@ -164,13 +169,100 @@ $\vvec{v}\in V, \vvec{\mu}\in Q$. You have babuska theory that gives you
 continuous existence. Don't go there... Discrete mention Stokes taylor hood, or
 the compatibility condition from spectral.
 % Galerkin
-
+The finite dimensional approximation of $V$ is $\Vh$. Here $\mathbf{n}$ is a
+multiindex of length $k+1$ and $\mathbf{n}_i, i=0, 1,\cdots, k$ denotes dimension
+of the $i$-th component of $\Vh$ which is spanned by functions $\phi^i_j,
+i=1,2,\cdots\mathbf{n}_i$. Note that $\phi^0_j$ are defined over $\Omega$ while
+the rest have the reference interval as their domain. Similarly, we denote $\Qh$ 
+the finite dimensional approximation of $Q$ is . Here $\mathbf{m}$ is a multiindex
+of length $k$ and $\mathbf{m}_i, i=1, 2, \cdots, k$ denotes dimension of the 
+$i$-th component of $\Qh$ spanned by functions $\psi^i_j, j=1,
+2\cdots,\mathbf{m}_i$.
 % Matrices
+Let $n, m$ be respectively the sizes of multiindices $\mathbf{n}, \mathbf{m}$.
+The abstract saddle point problem considered on the discerete subspaces
+translates into the linear system: Find $\mathbf{U}\in\mathbb{R}^n,
+\mathbf{P}\in\mathbb{R}^m$ such that
+\[
+    \begin{bmatrix}
+      \mathbb{A} & \mathbb{B} \\
+      \mathbb{B}^{\text{T}} & 0
+    \end{bmatrix}
+    \,
+    \begin{bmatrix}
+      \mathbf{U} \\
+      \mathbf{P}
+    \end{bmatrix}
+    =
+    \begin{bmatrix}
+      \mathbf{b}\\
+      0
+    \end{bmatrix}.
+\]
+$\mathbf{b}\in\mathbb{R}^n$ has most entries zero except the first $\mathbf{n}_0$
+entries which take the value $\inner{\phi^0_j}{f}$. The matrix
+$\Amat\in\mathbb{R}^{n\times n}$ is block diagonal consisting of $k+1$
+submatrices
+\[
+    \mathbb{A}=
+    \begin{bmatrix}
+      \mathbb{A}^0  &   &  &\\
+                    & \mathbb{A}^1 &  &\\
+                    &   &   \ddots    & \\
+                    &   &   & \mathbb{A}^k\\
+    \end{bmatrix}
+\]
+with $\mathbb{A}^0_{i, j}=E\inner{\Delta \phi^0_i}{\Delta\phi^0_j}$ and
+$\mathbb{A}^r_{i, j}=E_r\displaystyle\int_{\mathcal{I}}
+\deriv{^2\phi^r_i}{s^2}\deriv{^2\phi^r_j}{s^2}J_r^3$. Matrix
+$\Bmat\in\mathbb{R}^{n\times m}$
+\[
+    \mathbb{B}=
+    \begin{bmatrix}
+      \mathbb{C}^1 & \mathbb{C}^2 & \cdots & \cdots & \mathbb{C}^k\\
+      \mathbb{M}^1   &        0       & \cdots & \cdots &        0      \\
+           0         & \mathbb{M}^2   &    0   & \cdots &   \vdots      \\
+         \vdots      &       0        & \ddots & \ddots &   \vdots      \\
+         \vdots      &     \vdots      & \ddots & \ddots &       0      \\
+      0         &  \cdots        & \cdots & 0      &   \mathbb{M}^k     \\
+    \end{bmatrix}
+\]
+where $\mathbb{C}^r_{ij}=\int_{\mathcal{I}}\phi^0_j\psi^r_i$ and
+$\mathbb{M}^r_{ij}=\int_{\mathcal{I}}\phi^r_j\psi^r_i$, so the latter defines
+a mass matrix between spaces.
+Eigenvalue problems for wellposedness/stability. Programming needs assembler
+so just take into accont the multiindex to get the position and size of the
+block. What are blocks: we have mass matrix and the 1d 2d bending matrices.
+Simplifies if $\phi^i=\psi^i$.
 
 % Discussion on properties of basis. Some speedup with FFT
+\section{Basis}
+% For each basis how it is defined. How does A look, convergence properties for
+% biharmonic problem(What happens if discontinuity). How does A scale. Comment
+% on fast assembly
+\subsection{Shen basis}
+Described in shen. Legendre polynomials - we use for clamped boundary
+conditions. Confirm spectral convergence in 1d and 2d. In 1d the biharmonic is
+diagonal hence Ak matrices. But A0 is ... . Mass matrix is penta diagonal. How
+does 2d bending matrix scale. Probably mention the tensor product. Mention
+forward legendre transform.
+\subsection{Eigen basis}
+Consider eigenvalue problem. Find functions - spectral decomposition. Action of
+Galerkin method with the basis. Convergence 1d, 2d. Matrices. Solution. If you
+have time it would be really nice to solve 1d solution with rhs that has
+different smoothness so that we see how it effects the rate in both cases.
 
-% Eigenvalue problems related to LBB, do both?
+\section{Eigenvalues}
+When the basis are explained. We show kappa of both matrices as matrix
+increases. Preconditioning - suggest space for the multiplier.
 
-% Preconditioning
+\section{Showcase}
+Will not have rates but we can show same domain multiple beans different bcs. If
+the nonlinearity is included.... If the precond works at least in one case solve
+the problem iteratively.
+% Preconditioning, uzawa, block lu
+
+\section{Conclusions and extensions}
+Combine different families of functions...
 
 \end{document}
