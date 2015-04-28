@@ -67,6 +67,22 @@ def bending_matrix(n):
 # The flow is eval -> (extend -> fft) -> (take only imag or results = sines)
 
 
+def sine_points(N):
+    '''Points where the function is sampled for sine transformation'''
+    # 1d
+    if isinstance(N, int):
+        points = np.linspace(0, 2*PI, 2*N, endpoint=False)[:N]
+        return points
+    # 2d
+    elif hasattr(N, '__len__'):
+        assert len(N) == 2
+        # X and Y coordinates of the tensor product
+        X, Y = [sine_points(N[0]), sine_points(N[1])]
+        XY = np.array([list(xy) for xy in product(X, Y)])
+        X, Y = XY[:, 0], XY[:, 1]
+        return X, Y
+
+
 def sine_eval(N, f):
     '''
     Sample f in N+1 points from the interval [0, 2*pi). Or the cartesian product
@@ -76,7 +92,7 @@ def sine_eval(N, f):
     assert isinstance(f, (Expr, Number))
     # 1d
     if isinstance(N, int):
-        points = np.linspace(0, 2*PI, 2*N, endpoint=False)[:N]
+        points = sine_points(N)
 
         x = Symbol('x')
         flambda = lambdify(x, f, 'numpy')
@@ -86,11 +102,7 @@ def sine_eval(N, f):
     # 2d
     elif hasattr(N, '__len__'):
         assert len(N) == 2
-        X = np.linspace(0, 2*PI, 2*N[0], endpoint=False)[:N[0]]
-        Y = np.linspace(0, 2*PI, 2*N[1], endpoint=False)[:N[1]]
-        # X and Y coordinates of the tensor product
-        XY = np.array([list(xy) for xy in product(X, Y)])
-        X, Y = XY[:, 0], XY[:, 1]
+        X, Y = sine_points(N)
 
         x, y = symbols('x, y')
         flambda = lambdify([x, y], f, 'numpy')
@@ -105,9 +117,7 @@ def sine_fft(f_vec):
     '''
     # 1d
     if f_vec.shape == (len(f_vec), ):
-        N = len(f_vec)-1
         f_vec = np.r_[f_vec, f_vec[0], -f_vec[1:][::-1]]
-
 
         F_vec = np.fft.rfft(f_vec)
         # These are the coefficient values
@@ -117,17 +127,41 @@ def sine_fft(f_vec):
         return F_vec.imag[1:]
     #2d
     elif len(f_vec.shape) == 2:
+        F_vec = np.zeros_like(f_vec)
         # Do sine_fft on rows
         for i, row in enumerate(f_vec):
-            f_vec[i, :] = sine_fft(row)
+            F_vec[i, :] = sine_fft(row)
+
+        # Do sine_fft on cols
+        for j, col in enumerate(F_vec.T):
+            F_vec[:, j] = sine_fft(col)
+
+        return F_vec
+
+
+def sine_ifft(F_vec):
+    '''Point values from coefficients'''
+    if F_vec.shape == (len(F_vec), ):
+        # Rescale
+        N = len(F_vec)
+        n_points = 2*len(F_vec)
+        F_vec /= -2./n_points/Sqrt(2/PI)
+        # Fake complex
+        F_vec = np.r_[0, F_vec]*1j
+        f_vec = np.fft.irfft(F_vec)
+        return f_vec[:N]
+    #2d
+    elif len(F_vec.shape) == 2:
+        f_vec = np.zeros_like(F_vec)
+        # Do sine_fft on rows
+        for i, row in enumerate(F_vec):
+            f_vec[i, :] = sine_ifft(row)
 
         # Do sine_fft on cols
         for j, col in enumerate(f_vec.T):
-            f_vec[:, j] = sine_fft(col)
+            f_vec[:, j] = sine_ifft(col)
 
         return f_vec
-
-# TODO inverse fft for plotting
 
 
 def load_vector(f, n, n_quad=0, n_fft=0):
@@ -193,6 +227,7 @@ def load_vector(f, n, n_quad=0, n_fft=0):
 
 if __name__ == '__main__':
     from sympy import lambdify, Symbol, cos, exp
+    from sympy.plotting import plot3d
 
     n = 8
     basis = sine_basis(n)
@@ -242,8 +277,50 @@ if __name__ == '__main__':
     assert B.shape == mat.shape
     assert np.allclose(B.toarray(), mat)
 
-    # Check load vector by FFT
-    f = x*(x-pi)
+    # sine FFT 1d
+    f = 1*sin(x) - 2*sin(2*x)
+    f_vec = sine_eval(N=1000, f=f)
+    F_vec = sine_fft(f_vec)
+    f_vec_ = sine_ifft(F_vec)
+    print 'fft(ifft(f) - f', np.linalg.norm(f_vec - f_vec_), f
+
+    import matplotlib.pyplot as plt
+
+    points = sine_points(len(f_vec))
+
+    plt.figure()
+    plt.plot(points, f_vec, 'x', label='one')
+    plt.plot(points, f_vec_, 'o', label='two')
+    plt.xlim((0, np.pi))
+    plt.legend()
+
+    # sine FFT 2d
+    y = Symbol('y')
+    h = x*(x-pi)*sin(x+y)*y**2*(y-pi)**2
+
+    f_vec = sine_eval(N=[100, 100], f=h)
+    F_vec = sine_fft(f_vec)
+    f_vec_ = sine_ifft(F_vec)
+    print 'fft(ifft(f) - f', np.linalg.norm(f_vec - f_vec_), h
+
+    X, Y = sine_points(f_vec.shape)
+    X = X.reshape(f_vec.shape)
+    Y = Y.reshape(f_vec.shape)
+
+    # print f_vec
+    fig, (ax0, ax1) = plt.subplots(1 ,2)
+    ax0.pcolor(X, Y, f_vec)
+    ax0.set_xlim((0, np.pi))
+    ax0.set_ylim((0, np.pi))
+
+    ax1.pcolor(X, Y, f_vec_)
+    ax1.set_xlim((0, np.pi))
+    ax1.set_ylim((0, np.pi))
+
+    plot3d(h, (x, 0, np.pi), (y, 0, np.pi))
+
+    plt.show()
+
     # f = sin(x) + 7*sin(2*x) - sin(4*x)  # Exact
     # f = sin(x)*cos(2*pi*x)*exp(x**2)
     # f = exp(x)*(sum(i*x**i for i in range(1, 4)))
