@@ -12,12 +12,12 @@ import numpy as np
 
 # FIXME: we have a but somewhere ...
 
-def solve_2d(f, n, n_fft):
+def solve_2d(f, n, n_fft, n_quad):
     '''Solve the biharmonic problem by nxn sine polynomials.'''
     B = np.diagonal(sine.bending_matrix(n).toarray())
     A = np.diagonal(sine.stiffness_matrix(n).toarray())
 
-    b = sine.load_vector(f, n=[n, n], use_fft=True, n_fft=n_fft)
+    b = sine.load_vector(f, n=[n, n], n_fft=n_fft, n_quad=n_quad)
     U = np.zeros_like(b)
     for i in range(U.shape[0]):
         for j in range(U.shape[1]):
@@ -68,7 +68,7 @@ if __name__ == '__main__':
     
     # Setup
     x, y = symbols('x, y')
-    u = (x*(x-pi)*y*(y-pi))**2*sin(2*x)*sin(4*y)
+    u = (x*(x-pi)*y*(y-pi))**2*sin(x)*sin(y)
     f = get_rhs(u)
 
     # How accurately eval f and error
@@ -88,20 +88,26 @@ if __name__ == '__main__':
     errors = []
     while not converged:
         start = time.time()
-        Uh_k = solve_2d(f, n, n_fft=512)
+        Uh_k = solve_2d(f, n, n_fft=0, n_quad=200)
         n_rows, n_cols = Uh_k.shape
         # print '\tsolver', time.time() - start
 
-        # Error in spectral coefs
-        # E_k = Uk[:n_rows, :n_cols] - Uh_k
-        # error = np.linalg.norm(E_k)/n_rows/n_cols
+        # Error in spectral coefs -- should be very small!
+        E_k = Uk[:n_rows, :n_cols] - Uh_k
+        error = np.linalg.norm(E_k)/n_rows/n_cols
         # print '\terror', time.time() - start
-        uh = sine.sine_function(Uh_k)
-        e = u - uh
+        
+        # Power spectrum of error?
+        # uh = sine.sine_function(Uh_k)
+        # e = u - uh
         # Evec = sine_eval(N=[n_fft, n_fft], f=u)
         # E_k = sine_fft(Evec)
         # error = np.linalg.norm(E_k)/n_rows/n_cols
-        error = sqrt(Q2(e**2, [0, pi.n()], [0, pi.n()]))
+        
+        # Proper L^2
+        # uh = sine.sine_function(Uh_k)
+        # e = u - uh
+        # error = sqrt(Q2(e**2, [0, pi.n()], [0, pi.n()]))
 
         if n != 2:
             ns.append(n)
@@ -111,7 +117,7 @@ if __name__ == '__main__':
 
         converged = error < tol or n >= n_max
         error0, n0 = error, n
-        n += 4
+        n += 1
    
     print 'Over'
 

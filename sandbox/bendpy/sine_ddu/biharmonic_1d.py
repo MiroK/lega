@@ -15,18 +15,14 @@ import numpy as np
 
 def solve_biharmonic_1d(f, n):
     '''Solve biharmonic problem with N fourier sine polynomials.'''
-    A = bending_matrix(n)
+    A = np.diagonal(bending_matrix(n).toarray())
 
     # Try to see how big of an error we make when computing rhs with fft
     # Integrated
     b = load_vector(f, n)
-    # Try some frequency
-    # F = sine_eval(8192, f)
-    # bb = sine_fft(F)[:n]
-    # print 2**n, '>>>', np.linalg.norm(b-bb)
 
     # The system is (A + k*M)*U = bb
-    U = la.spsolve(A, b)
+    U = b/A
 
     # Note that x is a vector of expansion coeffs of the solution w.r.t to
     # the sine basis
@@ -67,7 +63,7 @@ def get_problem(f):
 # -----------------------------------------------------------------------------
 
 if __name__ == '__main__':
-    from sympy import cos, pi, lambdify, exp
+    from sympy import cos, pi, lambdify, exp, S
     from lega.sine_basis import sine_function
     from sympy.plotting import plot
     from sympy.mpmath import quad
@@ -76,7 +72,7 @@ if __name__ == '__main__':
     
     # Setup
     x = Symbol('x')
-    f = x*exp(x)*cos(2*pi)
+    f = S(1)  # x*exp(x)*cos(2*pi)
     u, f = get_problem(f)
 
     n_max = 30
@@ -91,16 +87,26 @@ if __name__ == '__main__':
         U = solve_biharmonic_1d(f, n)
 
         # Error using symobolic functions
+        # uh = sine_function(U)
+        # Want L2 norm of the error
+        # e = u - uh
+        # error = sqrt(quad(lambdify(x, e**2), [0, Pi]))
+
+        # Error by FFT of the error and parseval
         uh = sine_function(U)
         # Want L2 norm of the error
         e = u - uh
-        error = sqrt(quad(lambdify(x, e**2), [0, Pi]))
-
-        # Error by FFT
         Evec = sine_eval(f=e, N=2**16)
         e_k = sine_fft(Evec)
         # Use parseval
-        error_ = sqrt(np.sum(e_k**2))
+        error = sqrt(np.sum(e_k**2))
+
+        # Did we get the fourier coefs right?
+        # u_vec = sine_eval(f=u, N=2**16)
+        # u_k = sine_fft(u_vec)[:n]
+        # e_k = u_k - U
+        # error = sqrt(np.sum(e_k**2))
+        error_ = -1
 
         if n != 2:
             ns.append(n)
@@ -110,7 +116,7 @@ if __name__ == '__main__':
 
         converged = error < tol or n >= n_max
         error0, n0 = error, n
-        n += 1
+        n *= 2
     
     plt.figure()
     plt.loglog(ns, errors)

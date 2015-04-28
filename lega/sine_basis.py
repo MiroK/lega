@@ -1,6 +1,7 @@
 from __future__ import division
 from sympy import sin, sqrt, pi, Number, Expr, Symbol, lambdify, symbols
 from common import function, tensor_product
+from lega.integration import Quad1d, Quad2d
 from scipy.sparse import eye, diags
 from math import pi as PI, sqrt as Sqrt
 from sympy.mpmath import quad
@@ -126,16 +127,26 @@ def sine_fft(f_vec):
 
         return f_vec
 
+# TODO inverse fft for plotting
 
-def load_vector(f, n, use_fft=False, n_fft=None):
+
+def load_vector(f, n, n_quad=0, n_fft=0):
     '''(f, v) for v in sine basis(n).'''
     # Compute the integral by numeric/symbolic integration
-    if not use_fft: 
+    if n_fft == 0: 
         # 1d
         if isinstance(n, int):
             x = Symbol('x')
-            return np.array([quad(lambdify(x, f*v), [0, PI])
-                             for v in sine_basis(n)], dtype=float)
+            
+            # Integration by sympy
+            if n_quad == 0:
+                quadrature = lambda v, f=f: quad(lambdify(x, f*v), [0, PI])
+            # My custome quadrature with fixed degree
+            else:
+                Q1 = Quad1d(n_quad)
+                quadrature = lambda v, f=f: Q1(f*v, [0, PI])
+
+            return np.array(map(quadrature, sine_basis(n)), dtype=float)
         
         # 2d
         elif hasattr(n, '__len__'):
@@ -146,12 +157,20 @@ def load_vector(f, n, use_fft=False, n_fft=None):
             basis = tensor_product([basis_x, basis_y])
 
             x, y = symbols('x, y')
-            return np.array([quad(lambdify([x, y], f*v), [0, PI], [0, PI])
-                             for v in basis], dtype=float).reshape(n)
+
+            # Integration by sympy
+            if n_quad == 0:
+                quadrature = \
+                    lambda v, f=f: quad(lambdify([x, y], f*v), [0, PI], [0, PI])
+            # My custome quadrature with fixed degree
+            else:
+                Q2 = Quad2d(n_quad)
+                quadrature = lambda v, f=f: Q2(f*v, [0, PI], [0, PI])
+
+            return np.array(map(quadrature, basis), dtype=float).reshape(n)
 
     # Integral by fft only approximate!
     else:
-        assert n_fft is not None
         # 1d
         if isinstance(n, int):
             # If f is constant this is the minimal requirement for sensible results
@@ -169,7 +188,6 @@ def load_vector(f, n, use_fft=False, n_fft=None):
             F_vec = sine_fft(f_vec)[:n[0], :n[1]]
 
             return F_vec
-
 
 # -----------------------------------------------------------------------------
 
@@ -233,8 +251,10 @@ if __name__ == '__main__':
                            dtype=float)
    
     b = load_vector(f, len(basis))
-    b_ = load_vector(f, len(basis), use_fft=True, n_fft=2**14)
+    b_ = load_vector(f, len(basis), n_fft=2**14)
     print '1d error', np.linalg.norm(b - b_)
+    b__ = load_vector(f, len(basis), n_quad=200)
+    print '1d error', np.linalg.norm(b - b__)
 
     # y = Symbol('y')
     # g = sin(x)*(y**2-1)
@@ -259,10 +279,14 @@ if __name__ == '__main__':
     
     start = time.time()
     b = load_vector(f, [5, 5])
-    print 'QUAD', time.time() - start
+    print 'QUAD sympy', time.time() - start
 
     start = time.time()
-    b_ = load_vector(f, [5, 5], use_fft=True, n_fft=64)
+    b_ = load_vector(f, [5, 5], n_fft=64)
     print 'FFT', time.time() - start
-
     print '2d error', np.linalg.norm(b - b_)
+
+    start = time.time()
+    b__ = load_vector(f, [5, 5], n_quad=200)
+    print 'QUAD me', time.time() - start
+    print '2d error', np.linalg.norm(b - b__)
