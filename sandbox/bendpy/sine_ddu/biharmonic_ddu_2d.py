@@ -82,42 +82,43 @@ if __name__ == '__main__':
     Uvec = sine_eval(N=[n_fft, n_fft], f=u)
     Uk = sine_fft(Uvec)
 
-    Q2 = Quad2d(200)
+    Q2 = Quad2d(250)
 
     ns = []
     errors = []
+
+    print '\tn\tproper L^2\tgrid spectrum of error\terror in coefs\trate'
     while not converged:
         start = time.time()
-        Uh_k = solve_2d(f, n, n_fft=0, n_quad=200)
+        Uh_k = solve_2d(f, n, n_fft=0, n_quad=250)
         n_rows, n_cols = Uh_k.shape
         # print '\tsolver', time.time() - start
 
         # Error in spectral coefs -- should be very small!
         E_k = Uk[:n_rows, :n_cols] - Uh_k
-        error = np.linalg.norm(E_k)/n_rows/n_cols
+        error2 = np.linalg.norm(E_k)/n_rows/n_cols
         # print '\terror', time.time() - start
         
-        # Power spectrum of error?
-        # uh = sine.sine_function(Uh_k)
-        # e = u - uh
-        # Evec = sine_eval(N=[n_fft, n_fft], f=u)
-        # E_k = sine_fft(Evec)
-        # error = np.linalg.norm(E_k)/n_rows/n_cols
-        
         # Proper L^2
-        # uh = sine.sine_function(Uh_k)
-        # e = u - uh
-        # error = sqrt(Q2(e**2, [0, pi.n()], [0, pi.n()]))
+        uh = sine.sine_function(Uh_k)
+        e = u - uh
+        error = sqrt(Q2(e**2, [0, pi.n()], [0, pi.n()]))
+
+        # Power spectrum of error?
+        Evec = sine_eval(N=[n_fft, n_fft], f=e)
+        E_k = sine_fft(Evec)
+        error1 = np.linalg.norm(E_k)
+        
 
         if n != 2:
             ns.append(n)
             errors.append(error)
             rate = ln(error/error0)/ln(n0/n)
-            print 'n=%d, {e}_2=%.4E(%.2f)' % (n, error, rate)
+            print '%d, %.8E %.8E %.8E %.2f' % (n, error, error1, error2, rate)
 
         converged = error < tol or n >= n_max
         error0, n0 = error, n
-        n += 1
+        n += 2
    
     print 'Over'
 

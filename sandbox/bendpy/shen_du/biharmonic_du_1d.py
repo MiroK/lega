@@ -78,6 +78,7 @@ if __name__ == '__main__':
     n = 2
     tol = 1E-14
     converged = False
+    print '\tn\tL^2 integration\tL^2 by mass'
     while not converged:
         U = solve_1d(f, n)  # w.r.t to shen
 
@@ -95,7 +96,7 @@ if __name__ == '__main__':
         # Legendre mass matrix computes the L2 error
         error_ = sqrt(e_.dot(L_mass_matrix(n+4).dot(e_)))
 
-        print 'n=%d, |e|_2=%.4E  {e}_2=%.4E' % (n, error, error_)
+        print '%d\t%.8E\t%.8E' % (n, error, error_)
 
         converged = error < tol or n >= n_max
         n += 1

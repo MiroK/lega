@@ -40,9 +40,9 @@ def solve_2d(f, n):
 
 if __name__ == '__main__':
     from sympy import sin, cos, pi, lambdify, symbols
+    from lega.integration import Quad2d
     from lega.legendre_basis import mass_matrix as L_mass_matrix
     from sympy.plotting import plot3d
-    from sympy.mpmath import quad
     from math import sqrt
     
     # Setup the problem from Shen's paper
@@ -56,9 +56,12 @@ if __name__ == '__main__':
     # Representation of exact solution in the Legendre basis
     u_leg = FLT([n_max+4, n_max+4])(u)
 
+    Q2 = Quad2d(200)
+
     n = 2
     tol = 1E-14
     converged = False
+    print '\tn\tL^2 integration\tL^2 by mass'
     while not converged:
         U = solve_2d(f, n)  # w.r.t to shen
 
@@ -72,15 +75,13 @@ if __name__ == '__main__':
         M = L_mass_matrix(n+4)
         error_ = sqrt(np.trace((M.dot(E)).dot(M.dot(E.T))))
 
-        if False:
-            # Symbolic representation of the error
-            uh = shen.shen_cb_function(U)
-            e = u - uh
-            # Get the L2 norm of error, this takes quite some time to compute
-            error = sqrt(quad(lambdify([x, y], e**2), [-1, 1], [-1, 1]))
-            print 'n=%d e_2=%.4E (mass)e_2=%.4E' % (n, error, error_)
-        else:
-            print 'n=%d (mass)e_2=%.4E' % (n, error_)
+        # Symbolic representation of the error
+        uh = shen.shen_cb_function(U)
+        e = u - uh
+        # Get the L2 norm of error, this takes quite some time to compute
+        error = sqrt(Q2(e**2, [-1, 1], [-1, 1]))
+        
+        print '%d\t%.8E\t%.8E' % (n, error, error_)
 
         # Mass matrix L2 is used for stopping
         converged = error_ < tol or n > n_max-1

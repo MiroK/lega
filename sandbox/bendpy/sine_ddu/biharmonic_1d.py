@@ -75,22 +75,21 @@ if __name__ == '__main__':
     f = S(1)  # x*exp(x)*cos(2*pi)
     u, f = get_problem(f)
 
-    n_max = 30
+    n_max = 256
 
     n = 2
     tol = 1E-14
     converged = False
 
-    ns = []
-    errors = []
+    print '\tn\tL^2\tgrid spectrum of error\terror in fourier coefs'
     while not converged:
         U = solve_biharmonic_1d(f, n)
 
         # Error using symobolic functions
-        # uh = sine_function(U)
+        uh = sine_function(U)
         # Want L2 norm of the error
-        # e = u - uh
-        # error = sqrt(quad(lambdify(x, e**2), [0, Pi]))
+        e = u - uh
+        error0 = sqrt(quad(lambdify(x, e**2), [0, Pi]))
 
         # Error by FFT of the error and parseval
         uh = sine_function(U)
@@ -99,28 +98,19 @@ if __name__ == '__main__':
         Evec = sine_eval(f=e, N=2**16)
         e_k = sine_fft(Evec)
         # Use parseval
-        error = sqrt(np.sum(e_k**2))
+        error1 = sqrt(np.sum(e_k**2))
 
         # Did we get the fourier coefs right?
-        # u_vec = sine_eval(f=u, N=2**16)
-        # u_k = sine_fft(u_vec)[:n]
-        # e_k = u_k - U
-        # error = sqrt(np.sum(e_k**2))
-        error_ = -1
+        u_vec = sine_eval(f=u, N=2**16)
+        u_k = sine_fft(u_vec)[:n]
+        e_k = u_k - U
+        error2 = sqrt(np.sum(e_k**2))/n
 
-        if n != 2:
-            ns.append(n)
-            errors.append(error)
-            rate = ln(error/error0)/ln(n0/n)
-            print 'n=%d, |e|_2=%.4E(%.2f)  {e}_2=%.4E' % (n, error, rate, error_)
+        print '%d\t%.8E\t%.8E\t%.8E' % (n, error0, error1, error2)
 
-        converged = error < tol or n >= n_max
-        error0, n0 = error, n
+        converged = error0 < tol or n >= n_max
         n *= 2
     
-    plt.figure()
-    plt.loglog(ns, errors)
-
     # Plot the final numerical one againt analytical
     p0 = plot(u, (x, 0, Pi), show=False)
     p1 = plot(uh, (x, 0, Pi), show=False)
