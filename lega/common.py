@@ -2,6 +2,7 @@ from __future__ import division
 from itertools import product
 from operator import mul
 from sympy import Symbol, Matrix
+import time
 
 
 def function(basis, coefs):
@@ -61,6 +62,21 @@ def jacobian_matrix(chi):
     rows = (pair[1] for pair in chi)
     # d chi_i / d sym_j
     return Matrix([[row.diff(var, 1) for var in variables] for row in rows])
+
+
+def timeit(f):
+    '''Timing decorator'''
+    RED = '\033[1;37;31m%s\033[0m'
+    def timed(*args, **kw):
+
+        ts = time.time()
+        result = f(*args, **kw)
+        te = time.time()
+
+        print RED % ('\t%r took: %2.4f sec' % (f.__name__, te-ts))
+        return result
+
+    return timed
 
 # -----------------------------------------------------------------------------
 

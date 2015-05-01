@@ -93,7 +93,11 @@ def sine_eval(N, f):
     # 1d
     if isinstance(N, int):
         points = sine_points(N)
-
+        
+        # Numbers are special
+        if isinstance(f, Number):
+            return float(f)*np.ones(len(points))
+        
         x = Symbol('x')
         flambda = lambdify(x, f, 'numpy')
         f_values = flambda(points)
@@ -103,6 +107,10 @@ def sine_eval(N, f):
     elif hasattr(N, '__len__'):
         assert len(N) == 2
         X, Y = sine_points(N)
+       
+        # Numbers are special
+        if isinstance(f, Number):
+            return float(f)*np.ones(len(X)).reshape(N)
 
         x, y = symbols('x, y')
         flambda = lambdify([x, y], f, 'numpy')
@@ -226,7 +234,7 @@ def load_vector(f, n, n_quad=0, n_fft=0):
 # -----------------------------------------------------------------------------
 
 if __name__ == '__main__':
-    from sympy import lambdify, Symbol, cos, exp
+    from sympy import lambdify, Symbol, cos, exp, S
     from sympy.plotting import plot3d
 
     n = 8
@@ -278,7 +286,8 @@ if __name__ == '__main__':
     assert np.allclose(B.toarray(), mat)
 
     # sine FFT 1d
-    f = 1*sin(x) - 2*sin(2*x)
+    f = S(1)
+    # :f = 1*sin(x) - 2*sin(2*x)
     f_vec = sine_eval(N=1000, f=f)
     F_vec = sine_fft(f_vec)
     f_vec_ = sine_ifft(F_vec)
