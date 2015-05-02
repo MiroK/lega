@@ -55,7 +55,7 @@ class ShenSimpleAssembler(CoupledAssembler):
             self._Amat_blocks.append(shen.bending_matrix(n))
 
         # Now materials:
-        for i, coef in enumerate(materials):
+        for i, coef in enumerate(self.materials):
             self._Amat_blocks[i] *= coef
 
         # Finally jacobians
@@ -106,49 +106,3 @@ class ShenSimpleAssembler(CoupledAssembler):
         b = shen.load_vector(F)
         self._vec_blocks.append(b.flatten())
 
-# -----------------------------------------------------------------------------
-
-if __name__ == '__main__':
-    from sympy.plotting import plot3d
-    from sympy import symbols, S, lambdify
-    import matplotlib.pyplot as plt
-
-    A0 = [-1, -1]
-    B0 = [1, 1]
-    beam0 = LineBeam(A0, B0)
-
-    A1 = [-1, 1]
-    B1 = [1, -1]
-    beam1 = LineBeam(A1, B1)
-
-    n_vector = [5, 5, 5]
-    beams = [beam0, beam1]
-    materials = [1, 100, 10]
-    foo = ShenSimpleAssembler(n_vector=n_vector, beams=beams,
-                              materials=materials)
-
-    foo.assemble_mat_blocks()
-    foo.assemble_vec_blocks(fs=[S(1)])
-    A, b = foo.assemble_system()
-
-    X = np.linalg.solve(A.toarray(), b)
-
-    n = n_vector[0]
-    U = X[:n**2].reshape((n, n))
-    uh = shen.shen_cb_function(U)
-
-    x, y = symbols('x, y')
-    # plot3d(uh, (x, -1, 1), (y, -1, 1))
-
-    n_points = 100
-    points = np.linspace(-1, 1, n_points)
-    X, Y = np.meshgrid(points, points)
-
-    uh = lambdify([x, y], uh, 'numpy')
-    Z = uh(X.flatten(), Y.flatten()).reshape((n_points, n_points))
-
-    plt.figure()
-    plt.pcolor(X, Y, Z)
-    plt.plot([A0[0], B0[0]], [A0[1], B0[1]], 'k', linewidth=2)
-    plt.plot([A1[0], B1[0]], [A1[1], B1[1]], 'k', linewidth=2)
-    plt.show()

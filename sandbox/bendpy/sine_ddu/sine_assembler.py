@@ -55,7 +55,7 @@ class SineSimpleAssembler(CoupledAssembler):
             self._Amat_blocks.append(sines.bending_matrix(n))
 
         # Now materials:
-        for i, coef in enumerate(materials):
+        for i, coef in enumerate(self.materials):
             self._Amat_blocks[i] *= coef
 
         # Finally jacobians
@@ -104,51 +104,3 @@ class SineSimpleAssembler(CoupledAssembler):
         n = self.n_vector[0]
         b = sines.load_vector(f, [n, n], n_fft=2048)
         self._vec_blocks.append(b.flatten())
-
-
-# -----------------------------------------------------------------------------
-
-if __name__ == '__main__':
-    from sympy.plotting import plot3d
-    import matplotlib.pyplot as plt
-    from sympy import symbols, S, lambdify
-
-    A0 = [0, 0]
-    B0 = [pi, pi]
-    beam0 = PiLineBeam(A0, B0)
-
-    A1 = [0, pi]
-    B1 = [pi, 0]
-    beam1 = PiLineBeam(A1, B1)
-
-    n_vector = [10, 10, 10]
-    beams = [beam0, beam1]
-    materials = [0.1, 100, 100]
-    foo = SineSimpleAssembler(n_vector=n_vector, beams=beams,
-                              materials=materials)
-
-    foo.assemble_mat_blocks()
-    foo.assemble_vec_blocks(fs=[S(1)])
-    A, b = foo.assemble_system()
-
-    X = np.linalg.solve(A.toarray(), b)
-
-    n = n_vector[0]
-    U = X[:n**2].reshape((n, n))
-    uh = sines.sine_function(U)
-
-    x, y = symbols('x, y')
-    # plot3d(uh, (x, 0, pi), (y, 0, pi))
-
-    n_points = 100
-    points = np.linspace(0, pi, n_points)
-    X, Y = np.meshgrid(points, points)
-
-    uh = lambdify([x, y], uh, 'numpy')
-    Z = uh(X.flatten(), Y.flatten()).reshape((n_points, n_points))
-
-    plt.figure()
-    plt.pcolor(X, Y, Z)
-    plt.plot([A0[0], B0[0]], [A0[1], B0[1]], 'k', linewidth=2)
-    plt.plot([A1[0], B1[0]], [A1[1], B1[1]], 'k', linewidth=2)
-    plt.show()

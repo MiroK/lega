@@ -78,7 +78,7 @@ class CoupledAssembler(object):
 
         for i, (C, D) in enumerate(zip(self._Cmat_blocks, self._Dmat_blocks)):
             B[0][i] = C
-            B[i+1][i] = D
+            B[i+1][i] = -D
              
         # Now as matrix
         B = bmat(B)
