@@ -6,7 +6,7 @@ from beam_defs import PiLineBeam
 from lega.integration import Quad1d
 import lega.sine_basis as sines
 from lega.common import tensor_product, timeit
-from scipy.sparse import kron, csr_matrix, eye
+from scipy.sparse import kron, csr_matrix, eye, diags, block_diag
 from scipy.linalg import eigh
 from sympy import symbols
 import numpy as np
@@ -114,17 +114,58 @@ class SineSimpleAssembler(CoupledAssembler):
             if s is None:
                 Hmat = eye(m)
             else:
-                A = sines.bending_matrix(m)
-                M = sines.mass_matrix(m)
-                
-                print '\t>> Getting %d eigs for H^{%.2f} norm' % (A.shape[0], s)
-                lmbda, U = eigh(A.toarray(), M.toarray()) 
-                W = M.dot(U)
+                # Generic for any basis
+                if False:
+                    A = sines.bending_matrix(m)
+                    M = sines.mass_matrix(m)
+                    
+                    print '\t>> Getting %d eigs for H^{%.2f} norm' % (A.shape[0], s)
+                    lmbda, U = eigh(A.toarray(), M.toarray()) 
+                    W = M.dot(U)
 
-                Lmbda = np.diag(lmbda**s)
+                    Lmbda = np.diag(lmbda**s)
 
-                Hmat = W.dot(Lmbda.dot(W.T))
-                Hmat = csr_matrix(Hmat)
+                    Hmat = W.dot(Lmbda.dot(W.T))
+                    Hmat = csr_matrix(Hmat)
+                   
+                # Sines are special
+                diagonal = np.diagonal(sines.bending_matrix(m).toarray())**s
+                Hmat = diags(diagonal, 0)
 
             Hmats.append(Hmat)
         return Hmats
+
+    def assemble_AApreconditioner_inv(self, s):
+        '''Preconditioner of system [[A, B], [B.T, 0]].'''
+        # Plate preconditioner
+        E = self.materials[0]
+        n = self.n_vector[0]
+        lmbda = np.diagonal(sines.stiffness_matrix(n).toarray())
+        diagonal = np.array([lmbda[i]**2 + 2*lmbda[i]*lmbda[j] + lmbda[j]**2 
+                             for j in range(n) for i in range(n)])
+        diagonal *= E
+        diagonal = diagonal**-1
+        Pmats = [diags(diagonal, 0)]
+
+
+        # Beam preconditioners
+        for n, E in zip(self.n_vector[1:], self.materials[1:]):
+            diagonal = np.diagonal(E*sines.bending_matrix(n).toarray())**(-1)
+            mat = diags(diagonal, 0)
+            Pmats.append(mat)
+
+        # Multiplier preconditioners
+        Hmats = []
+        for m in self.m_vector:
+            if s is None:
+                Hmat = eye(m)
+            else:
+                # Sines are special
+                diagonal = np.diagonal(sines.bending_matrix(m).toarray())**(-s)
+                Hmat = diags(diagonal, 0)
+
+            Hmats.append(Hmat)
+
+        Pmats.extend(Hmats)
+
+        return block_diag(Pmats)

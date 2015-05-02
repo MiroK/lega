@@ -30,23 +30,43 @@ def eigensolver(coupled_assembler, s=None):
     return AA_eigs, S_eigs
 
 
-def eigs_analysis(Aeigenvalues, Seigenvalues):
-    'Get smallest/largest(in magnitude) eigenvalues and the conditioner number.'
-    N = len(Aeigenvalues)
+class EigsAnalysis(object):
+    def __init__(self, file_name):
+        self.root = './mekit_latex/data/%s' % file_name
+        self.out_file = open(self.root, 'w')
+        self.eig_files = []
 
-    eigs = np.sort(np.abs(Aeigenvalues))
-    lmin = np.min(eigs)
-    lmax = np.max(eigs)
-    cond = lmax/lmin
+    def __call__(self, n, Aeigenvalues, Seigenvalues):
+        'Get smallest/largest(in magnitude) eigenvalues and the conditioner number.'
+        # Save eigenvalues
+        self.eig_files.append((n, '_'.join([self.root, str(n)])))
+        np.savetxt(self.eig_files[-1][1], Aeigenvalues)
+        
+        # Process 
+        N = len(Aeigenvalues)
 
-    Slmin = np.min(np.abs(Seigenvalues))
+        eigs = np.sort(np.abs(Aeigenvalues))
+        lmin = np.min(eigs)
+        lmax = np.max(eigs)
+        cond = lmax/lmin
 
-    names = ['N', 'lmin', 'lmax', 'cond', 'S_lmin']
-    values = [N, lmin, lmax, cond, Slmin]
+        Slmin = np.min(np.abs(Seigenvalues))
 
-    msg = '  '.join(['N = %d'%N]+map(lambda (n, value): '%s = %.4E' % (n, value),
-                                     zip(names[1:], values[1:])))
-    return msg
+        names = ['n', 'N', 'lmin', 'lmax', 'cond', 'S_lmin']
+        values = [n, N, lmin, lmax, cond, Slmin]
+
+        msg = '  '.join(['N = %d'%N]+map(lambda (n, value): '%s = %.4E' % (n, value),
+                                         zip(names[1:], values[1:])))
+
+        # Stats for this
+        out_line = '\t'.join(map(str,values))
+        self.out_file.write(out_line + '\n')
+
+        return msg
+
+    def close(self):
+        self.out_file.close()
+        return self.eig_files
 
 # -----------------------------------------------------------------------------
 
@@ -61,7 +81,7 @@ if __name__ == '__main__':
     RED = '\033[1;37;31m%s\033[0m'
     GREEN = "\033[1;37;32m%s\033[0m"
 
-    problem = 'sine'
+    problem = 'shen'
 
     if problem == 'sine':
         A0 = [pi/2, 0]
@@ -86,17 +106,22 @@ if __name__ == '__main__':
         bar = ShenSimpleAssembler
     
     beams = [beam0, beam1]
-    materials = [1, 2, 2]
+    materials = [1, 1, 1]
 
     s = -1.0
-    for deg in range(5, 11):
-        n_vector = [deg, deg, deg+1]
+    analysis = EigsAnalysis('%s_%d' % (problem, len(beams)))
+    for deg in range(5, 16, 2):
+        n_vector = [deg, deg, deg]
 
         foo = bar(n_vector=n_vector, beams=beams, materials=materials)
         AA_eigs, S_eigs = eigensolver(foo, s)
 
-        print GREEN % eigs_analysis(AA_eigs, S_eigs)
+        print GREEN % analysis(deg, AA_eigs, S_eigs)
+    spectra_files = analysis.close()
 
     plt.figure()
-    plt.plot(np.arange(1, len(AA_eigs)+1), AA_eigs, 'x')
+    for n, lmbdas in spectra_files:
+        AA_eigs = np.loadtxt(lmbdas)
+        plt.plot(np.arange(1, len(AA_eigs)+1), AA_eigs, 'x', label=str(n))
+    plt.legend()
     plt.show()
