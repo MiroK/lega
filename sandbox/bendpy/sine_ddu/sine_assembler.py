@@ -6,7 +6,8 @@ from beam_defs import PiLineBeam
 from lega.integration import Quad1d
 import lega.sine_basis as sines
 from lega.common import tensor_product, timeit
-from scipy.sparse import kron, csr_matrix
+from scipy.sparse import kron, csr_matrix, eye
+from scipy.linalg import eigh
 from sympy import symbols
 import numpy as np
 from math import pi
@@ -104,3 +105,26 @@ class SineSimpleAssembler(CoupledAssembler):
         n = self.n_vector[0]
         b = sines.load_vector(f, [n, n], n_fft=2048)
         self._vec_blocks.append(b.flatten())
+
+    @timeit
+    def preconditioner_blocks(self, s):
+        '''H^s norm preconditioners for multipliers.'''
+        Hmats = []
+        for m in self.m_vector:
+            if s is None:
+                Hmat = eye(m)
+            else:
+                A = sines.bending_matrix(m)
+                M = sines.mass_matrix(m)
+                
+                print '\t>> Getting %d eigs for H^{%.2f} norm' % (A.shape[0], s)
+                lmbda, U = eigh(A.toarray(), M.toarray()) 
+                W = M.dot(U)
+
+                Lmbda = np.diag(lmbda**s)
+
+                Hmat = W.dot(Lmbda.dot(W.T))
+                Hmat = csr_matrix(Hmat)
+
+            Hmats.append(Hmat)
+        return Hmats

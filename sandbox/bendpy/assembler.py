@@ -129,3 +129,33 @@ class CoupledAssembler(object):
         AA = self.assemble_mat()
         bb = self.assemble_vec()
         return AA, bb
+
+
+    def assemble_Apreconditioner(self, s):
+        '''Assemble preconditioner for the system.'''
+        Hmats = self.preconditioner_blocks(s)
+
+        for size, block in zip(self.m_vector, Hmats):
+            assert block.shape == (size, size)
+
+        A = self.assemble_Amat()
+
+        BA = block_diag([A] + Hmats)
+
+        n = self.n_vector[0]**2 + sum(self.n_vector[1:]) + sum(self.m_vector)
+        assert BA.shape == (n, n) 
+        return BA
+
+
+    def assemble_Spreconditioner(self, s):
+        '''Assemble preconditioner for Schur complement.'''
+        Hmats = self.preconditioner_blocks(s)
+
+        for size, block in zip(self.m_vector, Hmats):
+            assert block.shape == (size, size)
+
+        BS = block_diag(Hmats)
+
+        n = sum(self.m_vector)
+        assert BS.shape == (n, n) 
+        return BS
