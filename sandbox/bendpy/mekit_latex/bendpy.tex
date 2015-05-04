@@ -342,6 +342,97 @@ Galerkin method with the basis. Convergence 1d, 2d. Matrices. Solution. If you
 have time it would be really nice to solve 1d solution with rhs that has
 different smoothness so that we see how it effects the rate in both cases.
 
+\begin{table}[t!]
+    \begin{center}
+    \begin{tabular}{ccccc}
+\hline
+$n$  &  $f_0: \norm{e}_0$  & $f_1: \norm{e}_0$ & $f_2: \norm{e}_0$ & $f_3: \norm{e}_0$\\
+\hline
+4    & 1.0577E-04(3.61) & 9.9167E-05(3.81) &       --        & 1.4040E-04(2.46) \\
+8    & 6.1251E-06(4.11) & 5.7545E-06(4.11) & 2.8982E-08(5.84)& 6.2305E-06(4.49) \\
+16   & 2.9912E-07(4.36) & 2.8123E-07(4.35) & 4.1493E-10(6.13)& 3.0082E-07(4.37) \\
+32   & 1.3929E-08(4.42) & 1.4545E-08(4.27) & 4.8407E-12(6.42)& 1.4161E-08(4.41) \\
+64   & 6.2978E-10(4.47) & 5.9356E-10(4.61) & 5.6482E-14(6.42)& 6.5283E-10(4.44) \\
+128  & 2.5395E-11(4.63) & 2.4049E-11(4.63) & 8.5939E-16(6.04)& 2.7228E-11(4.58) \\
+256  & 1.1403E-12(4.48) & 1.0861E-12(4.47) & 7.0351E-16(0.29)& 1.2692E-12(4.42) \\
+\hline
+\hline
+    \end{tabular}
+    \caption{sines}
+  \label{tab:sine_convergence}
+  \end{center}
+  \end{table}
+
+
+\begin{table}[t!]
+    \begin{center}
+    \begin{tabular}{ccccc}
+\hline
+$n$  &  $f_0: \norm{e}_0$  & $f_1: \norm{e}_0$ & $f_2: \norm{e}_0$ & $f_3: \norm{e}_0$\\
+\hline
+4 &  3.0367E-05(2.34)& 1.1478E-05(4.11)& 7.5138E-07(8.28)& 8.7249E-05(2.65)  \\ 
+6 &  9.4639E-06(2.88)& 2.0211E-06(4.28)& 1.1883E-07(4.55)& 1.1292E-05(5.04) \\
+8 &  3.7833E-06(3.19)& 5.5737E-07(4.48)& 2.7564E-08(5.08)& 7.2035E-07(9.57) \\
+10&  1.7737E-06(3.39)& 1.9868E-07(4.62)& 1.0879E-08(4.17)& 2.8851E-08(14.42) \\
+12&  9.2954E-07(3.54)& 8.3836E-08(4.73)& 3.5788E-09(6.10)& 4.2572E-10(23.12) \\
+14&  5.2899E-07(3.66)& 3.9893E-08(4.82)& 1.1724E-09(7.24)& 8.7160E-12(25.23) \\
+16&  3.2080E-07(3.75)& 2.0775E-08(4.89)& 6.8783E-10(3.99)& 4.7527E-14(39.03) \\
+18&  2.0463E-07(3.82)& 1.1004E-08(5.40)& 4.3562E-10(3.88)& 8.3310E-15(14.78) \\
+20&  1.3602E-07(3.88)& 5.4562E-09(6.66)& 2.5669E-10(5.02)& 1.7601E-14(-7.10) \\
+22&  9.3564E-08(3.93)& 3.2351E-09(5.48)& 1.5121E-10(5.55)& 2.0605E-13(-25.81)\\
+24&  6.3166E-08(4.52)& 2.3836E-09(3.51)& 7.8326E-11(7.56)& 2.8589E-13(-3.76) \\
+26&  4.8081E-08(3.41)& 1.9361E-09(2.60)& 4.5928E-11(6.67)& 1.0247E-12(-15.95)\\
+28&  3.2319E-08(5.36)& 1.2840E-09(5.54)& 3.0818E-11(5.38)& 1.9021E-12(-8.35) \\
+30&  2.0739E-08(6.43)& 9.6124E-10(4.20)& 1.7277E-11(8.39)& 2.7543E-11(-38.74)\\
+\hline
+    \end{tabular}
+    \caption{shen}
+  \label{tab:shen_convergence}
+  \end{center}
+  \end{table}
+
+
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.45\textwidth]{img/shen_u0}
+\includegraphics[width=0.45\textwidth]{img/sine_u0}\\
+\includegraphics[width=0.45\textwidth]{img/shen_u0_ur}
+\includegraphics[width=0.45\textwidth]{img/sine_u0_ur}\\
+\caption{
+}
+\label{fig:conds}
+\end{figure}
+
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.45\textwidth]{img/shen_cond}
+\includegraphics[width=0.45\textwidth]{img/sine_cond}\\
+\includegraphics[width=0.45\textwidth]{img/shen_spectrum}
+\includegraphics[width=0.45\textwidth]{img/sine_spectrum}\\
+\caption{}
+\label{fig:no_precon}
+\end{figure}
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.45\textwidth]{img/Schur_precond_shen_cond}
+\includegraphics[width=0.45\textwidth]{img/Schur_precond_sine_cond}\\
+\caption{}
+\label{fig:Schur}
+\end{figure}
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.45\textwidth]{img/precond_shen_cond}
+\includegraphics[width=0.45\textwidth]{img/precond_sine_cond}\\
+\includegraphics[width=0.45\textwidth]{img/precond_shen_spectrum}
+\includegraphics[width=0.45\textwidth]{img/precond_sine_spectrum}\\
+\caption{}
+\label{fig:precond}
+\end{figure}
+
 \section{Eigenvalues}
 \label{sec:lbb}
 When the basis are explained. We show kappa of both matrices as matrix

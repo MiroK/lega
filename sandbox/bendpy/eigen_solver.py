@@ -81,26 +81,30 @@ if __name__ == '__main__':
     RED = '\033[1;37;31m%s\033[0m'
     GREEN = "\033[1;37;32m%s\033[0m"
 
-    problem = 'shen'
+    # Robust for material
+    # Robust for position
+    # Robust for numner
+
+    problem = 'sine'
+    L = 1.
+    A0 = [L-1, -1]
+    B0 = [1, 1-L]
+    A1 = [-1, 0]
+    B1 = [1, 0]
 
     if problem == 'sine':
-        A0 = [pi/2, 0]
-        B0 = [pi/2, pi]
-        beam0 = PiLineBeam(A0, B0)
+        def to_ref(P):
+            '''Take from [-1, 1]^2 to [0, pi]'''
+            return [(pi*P[0] + pi)/2, (pi*P[1] + pi)/2]
 
-        A1 = [0, pi/2]
-        B1 = [pi, pi/2]
+        A0, B0, A1, B1 = map(to_ref, (A0, B0, A1, B1))
+        beam0 = PiLineBeam(A0, B0)
         beam1 = PiLineBeam(A1, B1)
 
         bar = SineSimpleAssembler
 
     elif problem == 'shen':
-        A0 = [0, -1]
-        B0 = [0, 1]
         beam0 = LineBeam(A0, B0)
-
-        A1 = [-1, 0]
-        B1 = [1, 0]
         beam1 = LineBeam(A1, B1)
 
         bar = ShenSimpleAssembler
