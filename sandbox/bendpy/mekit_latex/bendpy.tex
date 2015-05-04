@@ -9,12 +9,22 @@
 \newcommand{\Bmat}{\ensuremath{\mathbb{B}}}
 \newcommand{\bvec}{\ensuremath{\mathbf{b}}}
 \newcommand{\uvec}{\ensuremath{\mathbf{u}}}
+\newcommand{\Uvec}{\ensuremath{\mathbf{U}}}
+\newcommand{\Pvec}{\ensuremath{\mathbf{P}}}
+
+
+
+
 \newcommand{\RM}{\ensuremath{RM}}
 \newcommand{\inner}[2]{\ensuremath{\left(#1, #2\right)}}
+\newcommand{\rinner}[2]{\ensuremath{\left(#1, #2\right)_r}}
 \newcommand{\tuple}[2]{\ensuremath{\left[#1, #2\right]}}
 
 \newcommand{\ainner}[2]{\ensuremath{a\left(#1, #2\right)}}
+\newcommand{\arinner}[2]{\ensuremath{a_r\left(#1, #2\right)}}
 \newcommand{\binner}[2]{\ensuremath{b\left(#1, #2\right)}}
+\newcommand{\brinner}[2]{\ensuremath{b\left(#1, #2\right)}}
+
 \newcommand{\Linner}[1]{\ensuremath{L\left(#1\right)}}
 \newcommand{\Vh}{\ensuremath{V_{\mathbf{n}}}}
 \newcommand{\Qh}{\ensuremath{Q_{\mathbf{m}}}}
@@ -97,7 +107,7 @@ $\mathcal{L}$,
 \begin{equation}
   \label{eq:bar}
 \mathcal{L}\left(u, \lambda\right) = \mathcal{E}\left(u\right) +
-  \sum_{r=1}^k\int_{\mathcal{I}}\left(u_0\cdot F_r - u_r\right)\lambda_r J_r.
+  \sum_{r=1}^k\int_{\mathcal{I}}\left(u_0\circ F_r - u_r\right)\lambda_r J_r.
 \end{equation}
 The space $Q$ and function $\lambda\in Q$ are defined analogically as in (\ref{eq:foo}).
 We note that the unconstrained problem (\ref{eq:bar}) is solvable only for
@@ -112,7 +122,7 @@ domain is simple, the Galerkin method with globally supported basis functions
 can be applied. Note that the finite element method is an instance of the Galerkin 
 method with test spaces spanned by the functions with local support. Regardless
 of the basis functions employed, the stable discretization of (\ref{eq:bar})
-requires that the Babu\v{s}ka-Brezzi conditions be satisfied by the constructed
+requires that the Babu\v{s}ka-Brezzi conditions be satisfied on the constructed
 finite dimensional spaces. We remark that in addition to stability
 considerations the finite element discretization of problem is also complicated
 by presence of the biharmonic operator which requires techniques for fourth order 
@@ -154,11 +164,69 @@ unknowns $\left(u, \lambda\right)\in V\times Q$. These equations read
     r=1, 2\cdots, k&.\\
   \end{aligned}
 \]
-To apply the Babu\v{s}ka-Brezzi theory of abstract saddle point problems to (\ref{eq:system})
-the system is rewritten in terms of bilinear forms $a:V\times V\mapsto \mathbb{R}$, $b:Q\times V\mapsto \mathbb{R}$
-and a linear form $L:V\mapsto R$. Here 
-$\ainner{u}{v}=\sum_{r=0}^{k}\ainner{u_r}{v_r}_r$ where
+System (\ref{eq:system}) fits into the abstract framework for saddle point
+problems (see eq. Quarteroni \cite{quarteroni}). Within the framework, existence
+and uniqueness of the solution of (\ref{eq:system}) can be discussed. Here we
+shall assume the problem is indeed well-posed and instead use the abstractions
+of the framework to identify the building blocks for efficient implementation
+of the Galerkin method for the saddle point system. To simplify the notation we
+let $\inner{\cdot}{\cdot}$ denote the $L^2$ inner product over the plate.
+Moreover for $r=1, 2, \cdots, k$ the weighted $L^2$ inner product over the
+interval $\mathcal{I}$ with the weight $J_r$ is denoted as $\rinner{\cdot}{\cdot}$.
 
+The abstract saddle point problem is defined in terms of bilinear forms $a:V\times V\mapsto \mathbb{R}$,
+$b:Q\times V\mapsto \mathbb{R}$ and a linear form $L:V\mapsto R$. To identify these 
+forms in the plate-beam system (\ref{eq:system}), let $a_0:V_0\times V_0\mapsto
+\mathbb{R}$ with $\ainner{u_0}{v_0}=E_0\inner{\Delta u_0}{\Delta v_0}$ and
+$a_r:V_r\times V_r\mapsto \mathbb{R}$ such that $\arinner{u_r}{v_r}=E_r\rinner{J_r^{-2}\tderiv{^2 u_r}{s^2}}{J_r^{-2}\tderiv{^2
+v_r}{s^2}}$ for $r=1, 2\cdots, k$. Moreover for we define $r$ bilinear forms
+$b_r:Q_r\times V\mapsto\mathbb{R}$ by
+$\brinner{\lambda_r}{u}=\rinner{u_0\circ F_r-u_r}{\lambda_r}$. It the follows 
+that the bilinear forms $a$ and $b$ are simply
+\[
+  \ainner{u}{v} = \displaystyle\sum_{r=0}^{k}\arinner{u_r}{v_r}\quad\text{ and
+  }\quad\binner{\lambda}{u} = \displaystyle\sum_{r=1}^{k}\brinner{\lambda_r}{u}.
+\]
+Finally with the linear form $\Linner{u}=\inner{f}{u_0}$ the problem
+(\ref{eq:system}) is rewritten as an abstract saddle point problem: Find
+$\left(u, \lambda\right)\in V\times Q$ such that
+\begin{equation}
+  \label{eq:abstract_saddle}
+  \ainner{u}{v} + \binner{\lambda}{v} + \binner{\mu}{u} = \Linner{v}\quad\forall
+  \left(v, \mu\right)\in V\times Q.
+\end{equation}
+
+To apply Galerkin method to system (\ref{eq:system}) we construct finite dimensional
+subspaces $\Vh\subset V$ and $\Qh\subset Q$ that approximate their continuous
+counter parts. As such the spaces $\Vh, \Qh$ have respectively $k+1$ and $k$
+components with their individual dimensions
+$\text{dim}\left(\Vh^r\right)=\mathbf{n}_r$, $\text{dim}\left(\Qh^r\right)=\mathbf{m}_r$ 
+encoded in multi-indices $\mathbf{n}\in\mathbb{R}^{k+1}, \mathbf{m}\in\mathbb{R}^k$.
+From this definition it follows that $n=\text{dim}\left(\Vh\right)$ and $m=\text{dim}\left(\Qh\right)$
+are the sizes of the respected multi-indices. Considering the saddle point
+problem (\ref{eq:system}) on the constructed subspaces yields a symmetric
+indefinite linear system
+\[
+  \label{eq:sysAB}
+    \begin{bmatrix}
+      \mathbb{A} & \mathbb{B} \\
+      \mathbb{B}^{\text{T}} & 0
+    \end{bmatrix}
+    \,
+    \begin{bmatrix}
+      \mathbf{U} \\
+      \mathbf{P}
+    \end{bmatrix}
+    =
+    \begin{bmatrix}
+      \mathbf{b}\\
+      0
+    \end{bmatrix},
+\]
+for the unknown expansion coefficients $\Uvec\in\mathbb{R}^n,
+\Pvec\in\mathbb{R}^m$ of the approximate solution
+$\left(u_\mathbf{n}, \lambda_{\mathbf{m}}\right)\in \Vh \times \Qh$ of
+(\ref{eq:system}).
 
 
 
@@ -166,11 +234,6 @@ $\ainner{u}{v}=\sum_{r=0}^{k}\ainner{u_r}{v_r}_r$ where
 % Galerkin and how A, B are formed for r. The elements that are needed for
 % efficiency: mass, stiffness, bending, (fast inner product). Probably mention sparsity
 % Eigenvalue problem for LBB.
-
-
-
-
-
 Let $\mathcal{I}$ denote a nonempty interval. As we are in the following
 interested in domains that have a Cartesian product structure we consider without
 loss of generality $\Omega=\mathcal{I}\times\mathcal{I}$. We shall refer to this
@@ -393,45 +456,45 @@ $n$  &  $f_0: \norm{e}_0$  & $f_1: \norm{e}_0$ & $f_2: \norm{e}_0$ & $f_3: \norm
 
 
 
-\begin{figure}[ht]
-\centering
-\includegraphics[width=0.45\textwidth]{img/shen_u0}
-\includegraphics[width=0.45\textwidth]{img/sine_u0}\\
-\includegraphics[width=0.45\textwidth]{img/shen_u0_ur}
-\includegraphics[width=0.45\textwidth]{img/sine_u0_ur}\\
-\caption{
-}
-\label{fig:conds}
-\end{figure}
-
-
-\begin{figure}[ht]
-\centering
-\includegraphics[width=0.45\textwidth]{img/shen_cond}
-\includegraphics[width=0.45\textwidth]{img/sine_cond}\\
-\includegraphics[width=0.45\textwidth]{img/shen_spectrum}
-\includegraphics[width=0.45\textwidth]{img/sine_spectrum}\\
-\caption{}
-\label{fig:no_precon}
-\end{figure}
-
-\begin{figure}[ht]
-\centering
-\includegraphics[width=0.45\textwidth]{img/Schur_precond_shen_cond}
-\includegraphics[width=0.45\textwidth]{img/Schur_precond_sine_cond}\\
-\caption{}
-\label{fig:Schur}
-\end{figure}
-
-\begin{figure}[ht]
-\centering
-\includegraphics[width=0.45\textwidth]{img/precond_shen_cond}
-\includegraphics[width=0.45\textwidth]{img/precond_sine_cond}\\
-\includegraphics[width=0.45\textwidth]{img/precond_shen_spectrum}
-\includegraphics[width=0.45\textwidth]{img/precond_sine_spectrum}\\
-\caption{}
-\label{fig:precond}
-\end{figure}
+ %\begin{figure}[ht]
+ %\centering
+ %\includegraphics[width=0.45\textwidth]{img/shen_u0}
+ %\includegraphics[width=0.45\textwidth]{img/sine_u0}\\
+ %\includegraphics[width=0.45\textwidth]{img/shen_u0_ur}
+ %\includegraphics[width=0.45\textwidth]{img/sine_u0_ur}\\
+ %\caption{
+ %}
+ %\label{fig:conds}
+ %\end{figure}
+ %
+ %
+ %\begin{figure}[ht]
+ %\centering
+ %\includegraphics[width=0.45\textwidth]{img/shen_cond}
+ %\includegraphics[width=0.45\textwidth]{img/sine_cond}\\
+ %\includegraphics[width=0.45\textwidth]{img/shen_spectrum}
+ %\includegraphics[width=0.45\textwidth]{img/sine_spectrum}\\
+ %\caption{}
+ %\label{fig:no_precon}
+ %\end{figure}
+ %
+ %\begin{figure}[ht]
+ %\centering
+ %\includegraphics[width=0.45\textwidth]{img/Schur_precond_shen_cond}
+ %\includegraphics[width=0.45\textwidth]{img/Schur_precond_sine_cond}\\
+ %\caption{}
+ %\label{fig:Schur}
+ %\end{figure}
+ %
+ %\begin{figure}[ht]
+ %\centering
+ %\includegraphics[width=0.45\textwidth]{img/precond_shen_cond}
+ %\includegraphics[width=0.45\textwidth]{img/precond_sine_cond}\\
+ %\includegraphics[width=0.45\textwidth]{img/precond_shen_spectrum}
+ %\includegraphics[width=0.45\textwidth]{img/precond_sine_spectrum}\\
+ %\caption{}
+ %\label{fig:precond}
+ %\end{figure}
 
 \section{Eigenvalues}
 \label{sec:lbb}
