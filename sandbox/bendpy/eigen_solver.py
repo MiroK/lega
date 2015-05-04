@@ -76,31 +76,39 @@ if __name__ == '__main__':
     from beam_defs import PiLineBeam, LineBeam
     import matplotlib.pyplot as plt
     from math import pi
+    import sys
 
     BLUE = '\033[1;37;34m%s\033[0m'
     RED = '\033[1;37;31m%s\033[0m'
     GREEN = "\033[1;37;32m%s\033[0m"
 
-    problem = 'shen'
+    problem = sys.argv[1]
+
+    name = 'one_up_down'
+    A0 = [0, -1]
+    B0 = [0, 1]
+    A1 = [-1, 0]
+    B1 = [1, 0]
+
+    # name = 'bar'
+    # A0 = [-1., -1]
+    # B0 = [1, 1.]
+    # A1 = [-1., 1.]
+    # B1 = [1., -1.]
 
     if problem == 'sine':
-        A0 = [pi/2, 0]
-        B0 = [pi/2, pi]
-        beam0 = PiLineBeam(A0, B0)
+        def to_ref(P):
+            '''Take from [-1, 1]^2 to [0, pi]'''
+            return [(pi*P[0] + pi)/2, (pi*P[1] + pi)/2]
 
-        A1 = [0, pi/2]
-        B1 = [pi, pi/2]
+        A0, B0, A1, B1 = map(to_ref, (A0, B0, A1, B1))
+        beam0 = PiLineBeam(A0, B0)
         beam1 = PiLineBeam(A1, B1)
 
         bar = SineSimpleAssembler
 
     elif problem == 'shen':
-        A0 = [0, -1]
-        B0 = [0, 1]
         beam0 = LineBeam(A0, B0)
-
-        A1 = [-1, 0]
-        B1 = [1, 0]
         beam1 = LineBeam(A1, B1)
 
         bar = ShenSimpleAssembler
@@ -108,10 +116,10 @@ if __name__ == '__main__':
     beams = [beam0, beam1]
     materials = [1, 1, 1]
 
-    s = -1.0
-    analysis = EigsAnalysis('%s_%d' % (problem, len(beams)))
-    for deg in range(5, 16, 2):
-        n_vector = [deg, deg, deg]
+    s = None
+    analysis = EigsAnalysis('%s_%s_%d' % (name, problem, len(beams)))
+    for deg in range(4, 25, 2):
+        n_vector = [deg, deg, deg] #, deg]
 
         foo = bar(n_vector=n_vector, beams=beams, materials=materials)
         AA_eigs, S_eigs = eigensolver(foo, s)

@@ -9,12 +9,17 @@ import lega.biharmonic_clamped_basis as shen
 import matplotlib.pyplot as plt
 import numpy as np
 
-A0 = [-1, -1]
-B0 = [1, 1]
-beam0 = LineBeam(A0, B0)
+# A0 = [-1, -1]
+# B0 = [1, 1]
+# A1 = [-1, 1]
+# B1 = [1, -1]
 
-A1 = [-1, 1]
-B1 = [1, -1]
+A0 = [-2./3, -1]
+B0 = [1., 0.]
+A1 = [1, 2./3.]
+B1 = [2./3, 1.]
+
+beam0 = LineBeam(A0, B0)
 beam1 = LineBeam(A1, B1)
 
 deg = 20
