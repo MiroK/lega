@@ -84,13 +84,14 @@ considered as a set $\Gamma_r=\left\{x\in\Omega, x=F_r\left(s\right), s\in\mathc
 defined by an invertible mapping $F_r$ with Jacobian $J_r$. Note that for straight 
 beams which are in focus of the presented work the Jacobian is simply the length of
 the beam divided by the length of the interval. The mapping $F_r$ is in addition 
-required to satisfy $F_r\left(s_0\right), F_r\left(s_1\right)\in\partial\Omega$ 
+required to satisfy the conditions $F_r\left(s_0\right), F_r\left(s_1\right)\in\partial\Omega$ 
 for $s_0, s_1$ the endpoints of $\mathcal{I}$. No beam is thus allowed to end inside 
 the plate. Finally $f$ denotes the load while $E_0, E_r, r=1,2,\cdots k$ are 
 constant parameters which, following the Kirchhoff-Love and Euler-Bernoulli
 hypothesis (e.g. \cite{reddy}), depend on the material and geometry.
 
-Introducing $k$ Lagrange multipliers $\lambda_k\in Q_k$, the constrained problem 
+Introducing $k$ Lagrange multipliers $\lambda_k\in Q_k$, where the functions in 
+$Q_k$ map the interval $\mathcal{I}$ to scalars, the constrained problem 
 (\ref{eq:foo}) can be equivalently written as a search for extrema of the Lagrangian
 $\mathcal{L}$,
 \begin{equation}
@@ -129,13 +130,38 @@ framework for abstract saddle point problems reviewed in Section
 \ref{sec:abstract}. The framework serves to identify the few common
 elements(matrices) that are required to easily introduce Galerkin discretizations of
 (\ref{eq:bar}) based on any set of basis functions. Properties of the two sets of
-basis functions considered in this paper are then discussed in Section \ref{sec:basis}.
+basis functions considered in this paper are then compared in Section \ref{sec:basis}.
 Finally in Section \ref{sec:lbb} the inf-sup condition for the two proposed
 disretizations is discussed.
 
 \section{Abstract framework for saddle point problems}
 \label{sec:abstract}
 % conditions for extrema
+The necessary conditions for the extreme point of the Lagrangian $\mathcal{L}$
+from (\ref{eq:bar}) define $2k+1$ equations to be satisfied by the $2k+1$
+unknowns $\left(u, \lambda\right)\in V\times Q$. These equations read
+\[
+  \begin{aligned}
+    \label{eq:system}
+    E_0\displaystyle\int_{\Omega}\Delta u_0\,\Delta v_0-
+    \sum_{r=1}^k\int_{\mathcal{I}}v_0\lambda_r J_r &=\displaystyle\int_{\Omega}f
+    v_0\quad\forall v_0\in V_0,& \\
+    E_r\displaystyle\int_{\mathcal{I}}
+    \deriv{^2u_r}{s^2}\deriv{^2v_r}{s^2}J_r^{-3} +
+  \int_{\mathcal{I}} u_r \lambda_r J_r &= 0\quad\forall v_r\in V_r, r=1,
+    2\cdots, k,&\\
+  \int_{\mathcal{I}}\left(u_r-u_0\right)\mu_r J_r &= 0\quad\forall \mu_r\in Q_r,
+    r=1, 2\cdots, k&.\\
+  \end{aligned}
+\]
+To apply the Babu\v{s}ka-Brezzi theory of abstract saddle point problems to (\ref{eq:system})
+the system is rewritten in terms of bilinear forms $a:V\times V\mapsto \mathbb{R}$, $b:Q\times V\mapsto \mathbb{R}$
+and a linear form $L:V\mapsto R$. Here 
+$\ainner{u}{v}=\sum_{r=0}^{k}\ainner{u_r}{v_r}_r$ where
+
+
+
+
 % how the problem fits saddle
 % Galerkin and how A, B are formed for r. The elements that are needed for
 % efficiency: mass, stiffness, bending, (fast inner product). Probably mention sparsity
@@ -196,15 +222,6 @@ Q,\vvec{\lambda}_i=\lambda_i$ and a problem
   -\displaystyle\int_{\Omega}f u - \sum_i\int_{\mathcal{I}}\left(u-u_i\right)\lambda_i J_i
 \]
 The necessary condition for extrema are then
-\[
-  \begin{aligned}
-    E\displaystyle\int_{\Omega}\Delta u\,\Delta v- \sum_i\int_{\mathcal{I}}v\lambda_i J_i
-    &=\displaystyle\int_{\Omega}f v\quad\forall v\in V& \\
-  E_i\displaystyle\int_{\mathcal{I}} \deriv{^2u_i}{s^2}\deriv{^2v_i}{s^2}J_i^3 +
-  \int_{\mathcal{I}} u_i \lambda_i J_i &= 0\quad\forall v_i\in V_i&\\
-  \int_{\mathcal{I}}\left(u_i-u\right)\mu_i J_i &= 0\quad\forall \mu_i\in Q_i&\\
-  \end{aligned}
-\]
 Under additional regularity we can make Euler Lagrange equations
 \[
   \begin{aligned}
@@ -309,7 +326,7 @@ Simplifies if $\phi^i=\psi^i$.
 
 % Discussion on properties of basis. Some speedup with FFT
 \section{Basis}
-\label{sec:abstract}
+\label{sec:basis}
 % For each basis how it is defined. How does A look, convergence properties for
 % biharmonic problem(What happens if discontinuity). How does A scale. Comment
 % on fast assembly
@@ -342,6 +359,7 @@ the problem iteratively.
 % Preconditioning, uzawa, block lu
 
 \section{Conclusions and extensions}
+\label{sec:end}
 Combine different families of functions...
 
 
