@@ -14,7 +14,7 @@
 
 
 
-
+\newcommand{\bend}{\ensuremath{\text{Bend}\left|\text{P}\right|\text{y}}}
 \newcommand{\RM}{\ensuremath{RM}}
 \newcommand{\inner}[2]{\ensuremath{\left(#1, #2\right)}}
 \newcommand{\rinner}[2]{\ensuremath{\left(#1, #2\right)_r}}
@@ -228,133 +228,10 @@ for the unknown expansion coefficients $\Uvec\in\mathbb{R}^n,
 $\left(u_\mathbf{n}, \lambda_{\mathbf{m}}\right)\in \Vh \times \Qh$ of
 (\ref{eq:system}).
 
-
-
-% how the problem fits saddle
-% Galerkin and how A, B are formed for r. The elements that are needed for
-% efficiency: mass, stiffness, bending, (fast inner product). Probably mention sparsity
-% Eigenvalue problem for LBB.
-Let $\mathcal{I}$ denote a nonempty interval. As we are in the following
-interested in domains that have a Cartesian product structure we consider without
-loss of generality $\Omega=\mathcal{I}\times\mathcal{I}$. We shall refer to this
-domain as \textit{plate}. Further let $w_i, i=1, 2,\cdots, k$ be a set of curves 
-$w_i=\left\{\vec{x}\in\Omega, \vec{x}=\vec{F}_i\left(s\right),
-s\in\mathcal{I}\right\}$, where $\vec{F_i}$ is a smooth invertible mapping with
-Jacobian $J_i>0$ that additionally satisfies $\vec{F}_i\left(s_0\right),
-\vec{F}_i\left(s_1\right)\in\partial\Omega$ and
-$\vec{F}_i\left(s_0\right) \neq \vec{F}_i\left(s_1\right)$ for $s_0, s_1$ the
-endpoints of interval $\mathcal{I}$. These curves, and occasionally the
-respected mappings are referred to as \textit{beams}. In this paper we are for the
-most part concerned with straight/linear beams, that is, we consider mappings
-$\vec{F}_i\left(s\right)=\vec{P}_i\tfrac{s_1-s}{s_1-s_0}+\vec{Q}_i\tfrac{s_0-s}{s_0-s_1}$
-determined by pairs of mutually distinct points $\vec{P}_i, \vec{Q}_i$ which
-are located on the boundary of the plate. Note that in this case
-$J_i=\tfrac{\left|\vec{P}_i-\vec{Q}_i\right|}{2}$.
-% you do linear so absorb jacobian into material!!! KISS
-%
-%
-%
-With these assumptions on geometry we let $V, \hat{V}_i, i=1, 2, \cdots, k$ denote
-spaces of functions that map respectively the plate and the beams to real
-numbers. By invertibility of $\vec{F}_i$ each function space $\hat{V}_i$ can be
-associated with a function space that $V_{i}$ that maps the reference interval
-$\mathcal{I}$ to real numbers. Indeed for $v\in V_i$ function
-$\hat{v}=v\circ\vec{F}_i$ belongs to $\hat{V}_i$.
-
-Let $u\in V, u_i\in V_i, i=1, 2, \cdots, k$ and consider the problem of
-minimizing the Lagrangian
-\[
-  \mathcal{L}\left(u, u_1, u_2, \cdots, u_k\right)=
-  \frac{E}{2}\displaystyle\int_{\Omega}\Delta u\,\Delta u+
-  \sum_i\frac{E_i}{2}\int_{\mathcal{I}}
-  \deriv{^2u_i}{s^2}\deriv{^2u_i}{s^2}J_i^{-3}
-  -\displaystyle\int_{\Omega}f u
-\]
-subjected to $k$ constraints
-$T(u)=u_i$, here $T(u)$ is a short hand for the composition of trace and the
-pullback inverse.\textit{explain the constraint, trace, Sobolev?}.
-We build the constraint into the Lagrangian. To this end consider spaces $Q_i$
-and functions (Lagrange multipliers) $\lambda_i\in Q_i$. Moreover let
-$Q=Q_0\times Q_1\times\cdots\times Q_k$ and $\vvec{\lambda}\in
-Q,\vvec{\lambda}_i=\lambda_i$ and a problem
-\[
-  \mathcal{L}\left(u, u_1, u_2, \cdots, u_k;\vvec{\lambda}\right)=
-   \frac{E}{2}\displaystyle\int_{\Omega}\Delta u\,\Delta u+
-  \sum_i\frac{E_i}{2}\int_{\mathcal{I}}
-  \deriv{^2u_i}{s^2}\deriv{^2u_i}{s^2}J_i^{-3}
-  -\displaystyle\int_{\Omega}f u - \sum_i\int_{\mathcal{I}}\left(u-u_i\right)\lambda_i J_i
-\]
-The necessary condition for extrema are then
-Under additional regularity we can make Euler Lagrange equations
-\[
-  \begin{aligned}
-    E\Delta^2u &= f\quad\text{ in }\Omega\\
-    E_i\deriv{^4 u_i}{s^4} &= 0\quad\text{ on }\mathcal{I}\\
-    u &= u_i\quad\text{ on }\mathcal{I}\\
-  \end{aligned}
-\]
-subjected to boundary conditions $u=0, \partial_nu=0$ and $u_i=0, \tderiv{u_i}{s}=0$
-$u=0, \Delta u=0$ and $u_i=0, \tderiv{^2u_i}{s^2}=0$. \textit{What are these called?}
-Abstract saddle $V:=V\times V_1, \times V_2, \cdots, \times V_k$,
-$V\ni\vvec{u}=\left(u, u_1, u_2, \cdots, u_k\right)$ and define bilinear form
-$a:V\times V\mapsto\mathbb{R}$ as
-\[
-  \ainner{\vvec{u}}{\vvec{v}} = 
-  E\displaystyle\int_{\Omega}\Delta u\,\Delta+
-  \sum_iE_i\displaystyle\int_{\mathcal{I}} \deriv{^2u_i}{s^2}\deriv{^2v_i}{s^2}J_i^3
-\]
-$b:V\times Q\mapsto\mathbb{R}$ as
-\[
-  \binner{\vvec{v}}{\vvec{\lambda}} = 
-  \int_{\mathcal{I}}\left(v_i-v\right)\lambda_i J_i
-\]
-Finally linear form
-$L:V\mapsto\mathbb{R}$ as
-\[
-  \displaystyle\int_{\Omega}f v
-\]
-%FIXME it is much better to use V_0 and then V...
-% Saddle
-Then the problem becomes simply: Find $\vvec{u}\in V, \vvec{\lambda}\in Q$ such
-that $\ainner{u}{v}+\binner{v}{\lambda}+\binner{u}{\mu}=\Linner{v}$ for all 
-$\vvec{v}\in V, \vvec{\mu}\in Q$. You have babuska theory that gives you
-continuous existence. Don't go there... Discrete mention Stokes taylor hood, or
-the compatibility condition from spectral.
-% Galerkin
-The finite dimensional approximation of $V$ is $\Vh$. Here $\mathbf{n}$ is a
-multiindex of length $k+1$ and $\mathbf{n}_i, i=0, 1,\cdots, k$ denotes dimension
-of the $i$-th component of $\Vh$ which is spanned by functions $\phi^i_j,
-i=1,2,\cdots\mathbf{n}_i$. Note that $\phi^0_j$ are defined over $\Omega$ while
-the rest have the reference interval as their domain. Similarly, we denote $\Qh$ 
-the finite dimensional approximation of $Q$ is . Here $\mathbf{m}$ is a multiindex
-of length $k$ and $\mathbf{m}_i, i=1, 2, \cdots, k$ denotes dimension of the 
-$i$-th component of $\Qh$ spanned by functions $\psi^i_j, j=1,
-2\cdots,\mathbf{m}_i$.
-% Matrices
-Let $n, m$ be respectively the sizes of multiindices $\mathbf{n}, \mathbf{m}$.
-The abstract saddle point problem considered on the discerete subspaces
-translates into the linear system: Find $\mathbf{U}\in\mathbb{R}^n,
-\mathbf{P}\in\mathbb{R}^m$ such that
-\[
-    \begin{bmatrix}
-      \mathbb{A} & \mathbb{B} \\
-      \mathbb{B}^{\text{T}} & 0
-    \end{bmatrix}
-    \,
-    \begin{bmatrix}
-      \mathbf{U} \\
-      \mathbf{P}
-    \end{bmatrix}
-    =
-    \begin{bmatrix}
-      \mathbf{b}\\
-      0
-    \end{bmatrix}.
-\]
-$\mathbf{b}\in\mathbb{R}^n$ has most entries zero except the first $\mathbf{n}_0$
-entries which take the value $\inner{\phi^0_j}{f}$. The matrix
-$\Amat\in\mathbb{R}^{n\times n}$ is block diagonal consisting of $k+1$
-submatrices
+Matrices $\Amat\in\mathbb{R}^{n\times n}$, $\Bmat\in\mathbb{R}^{n\times m}$ in
+(\ref{eq:sysAB}) inherit the structure of the bilinear forms $a, b$. Specifically, 
+the structure of $a$ translates into a block diagonal matrix $\Amat$ consisting of
+$k+1$ blocks
 \[
     \mathbb{A}=
     \begin{bmatrix}
@@ -362,12 +239,12 @@ submatrices
                     & \mathbb{A}^1 &  &\\
                     &   &   \ddots    & \\
                     &   &   & \mathbb{A}^k\\
-    \end{bmatrix}
+    \end{bmatrix},
 \]
-with $\mathbb{A}^0_{i, j}=E\inner{\Delta \phi^0_i}{\Delta\phi^0_j}$ and
-$\mathbb{A}^r_{i, j}=E_r\displaystyle\int_{\mathcal{I}}
-\deriv{^2\phi^r_i}{s^2}\deriv{^2\phi^r_j}{s^2}J_r^3$. Matrix
-$\Bmat\in\mathbb{R}^{n\times m}$
+where the submatrices $\mathbb{A}^r$ are defined as $\mathbb{A}^r_{i,
+j}=\arinner{\phi^r_i}{\phi^r_j}$ for $\phi^r_i, i=1, 2, \cdots \mathbf{n}_r$ the
+basis functions of the component $\Vh^r$. Moreover, due to structure of $b$ the 
+matrix $\Bmat$ consists of $k$ block columns
 \[
     \mathbb{B}=
     \begin{bmatrix}
@@ -377,33 +254,103 @@ $\Bmat\in\mathbb{R}^{n\times m}$
          \vdots      &       0        & \ddots & \ddots &   \vdots      \\
          \vdots      &     \vdots      & \ddots & \ddots &       0      \\
       0         &  \cdots        & \cdots & 0      &   \mathbb{M}^k     \\
-    \end{bmatrix}
+    \end{bmatrix}.
 \]
-where $\mathbb{C}^r_{ij}=\int_{\mathcal{I}}\phi^0_j\psi^r_i$ and
-$\mathbb{M}^r_{ij}=\int_{\mathcal{I}}\phi^r_j\psi^r_i$, so the latter defines
-a mass matrix between spaces.
-Eigenvalue problems for wellposedness/stability. Programming needs assembler
-so just take into accont the multiindex to get the position and size of the
-block. What are blocks: we have mass matrix and the 1d 2d bending matrices.
-Simplifies if $\phi^i=\psi^i$.
+Each column block consists of two sub-matrices
+$\mathbb{C}^r\in\mathbb{R}^{n\times\mathbf{m}_r}$ and
+$\mathbb{M}^r\in\mathbb{R}^{\mathbf{n}_r\times\mathbf{m}_r}$, which enforce the
+constraint of equal deformation of the plate and $r$-th beam. The matrix
+$\mathbb{C}^r$ with entries $\mathbb{C}^r_{i, j} = \rinner{\phi^0_i\circ F_r}{\psi^r_j}$ 
+enforces the constraint on the plate, while matrix $\mathbb{M}^r$ defined by
+$\mathbb{M}^r_{i, j}=-\rinner{\phi^r_i}{\psi^r_j}$ then enforces the constraint
+on the beam. Note that the $\psi^r_j, j=1, 2,\cdots,\mathbf{m}_r$ denote the basis
+functions of the Lagrange multiplier space $\Qh^r$.
 
-% Discussion on properties of basis. Some speedup with FFT
-\section{Basis}
+It is clear from the structure of the matrices of the linear system
+(\ref{eq:sysAB}) that its assembly requires three types of procedures (i) For 
+every subspace $\Vh^r$ a matrix of discretizing the biharmonic operator is needed.
+Note that for all the components but $\Vh^0$ the biharmonic operator is one 
+dimensional. (ii). For every pair of spaces $\Vh^r, \Qh^r, r=1,2,\cdot k$ a mass
+matrix $\mathbb{M}^r$ between the two spaces must be computed. (iii) Finally, for
+every space $\Qh^r$ there must be a procedure for the computing matrix $\mathbb{C}^r$
+which can be interpreted as a mass matrix between $\Vh^0$ and the space
+$\Qh^r$. The number of procedures is thus significantly reduced if all the
+spaces involved in the discrete formulation are spanned by the same functions. A
+further step to speedy assembly is a choice of basis functions for which the
+matrices $\mathbb{M}^r$ and $\mathbb{A}^r$ are sparse and the nonzero values can
+be tabulated. With these choices computing the matrices $\mathbb{C}^r$ remains the
+only bottleneck of the assembly process. 
+
+% Some comments on python bmat, sympy.lambdify vectorize numpy leggauss.
+In $\text{Bend}\!\left|\text{P}\right|\!\text{y}$ the integration of matrices $\mathbb{C}^r$ is built on top of
+{\tt{NumPy}}\cite{numpy} and {\tt{SymPy}}\cite{sympy} modules. Specifically, using
+{\tt{sympy.lambdify}} function, each integrand is turned from a symbolic representation 
+to a lambda function which is vectorized for fast evaluation of {\tt{Numpy}}
+arrays which represent the points of the Gauss-Legendre quadrature. The remaining
+matrices of the linear system (\ref{eq:sysAB}) are sparse and efficiently stored
+in the compressed sparsed row containers provided by {\tt{scipy.sparse}} module.
+The two sets of basis functions which are currently supported by $\text{Bend}\!\left|\text{P}\right|\!\text{y}$
+are discussed in the next section.
+
+\section{Basis functions of the Galerkin method}
 \label{sec:basis}
-% For each basis how it is defined. How does A look, convergence properties for
-% biharmonic problem(What happens if discontinuity). How does A scale. Comment
-% on fast assembly
-\subsection{Shen basis}
-Described in shen. Legendre polynomials - we use for clamped boundary
-conditions. Confirm spectral convergence in 1d and 2d. In 1d the biharmonic is
-diagonal hence Ak matrices. But A0 is ... . Mass matrix is penta diagonal. How
-does 2d bending matrix scale. Probably mention the tensor product. Mention
-forward legendre transform.
-\subsection{Eigen basis}
-Consider eigenvalue problem. Find functions - spectral decomposition. Action of
-Galerkin method with the basis. Convergence 1d, 2d. Matrices. Solution. If you
-have time it would be really nice to solve 1d solution with rhs that has
-different smoothness so that we see how it effects the rate in both cases.
+For sufficiently smooth solutions $\left(u, \lambda\right)$ of the saddle point
+problem (\ref{eq:bar}) the integration by parts yields that the solution $u$ also
+satisfies the system of partial differential equations
+\[
+  \begin{aligned}
+    E\Delta^2u &= f\quad\text{ in }\Omega\\
+    E_i\deriv{^4 u_i}{s^4} &= 0\quad\text{ on }\mathcal{I}\\
+    u &= u_i\quad\text{ on }\mathcal{I}\\
+  \end{aligned}
+\]
+subjected to boundary conditions $u=0, \partial_nu=0$ on $\partial\Omega $and 
+$u_i=0, \tderiv{u_i}{s}=0$ on $\partial\mathcal{I}$
+or $u=0, \Delta u=0$ on $\partial\Omega$ and $u_i=0, \tderiv{^2u_i}{s^2}=0$ on
+$\partial\mathcal{I}$. The first set of boundary conditions is known as clamped as
+it fixes both the displacement and the rotation of the system on the boundary. With
+the latter, simply supported boundary conditions, only the displacement is fixed. 
+Both boundary conditions are supported in $\text{Bend}\!\left|\text{P}\right|\!\text{y}$. 
+
+The clamped boundary conditions are enforced onto the solution by constructing
+the test spaces of the Galerkin method from functions $S_i$ presented in Shen
+\cite{shen_paper}. Functions $S_i$ defined over the interval
+$\mathcal{I}=\left[-1, 1\right]$ are linear combinations of Legendre
+polynomials where the coefficients of the combinations are chosen such that
+$S_i=0, \tderiv{S_i}{s}=0$ in the endpoints of the domain. To span an $n$
+dimensional space $\Vh^r, r>0$ defined over the interval $\mathcal{I}$, the first 
+$n$ functions $S_i$ are taken as the basis. For $n^2$ dimensional space $\Vh^0$ 
+defined over $\Omega=\mathcal{I}\times\mathcal{I}$ we use as the basis functions 
+products of the first $n$ functions in each Cartesian direction, that is, the basis 
+functions have the form $S_i\left(x\right)S_j\left(y\right)$. Further the choice of
+Shen basis functions yields matrices the one dimensional bending matrix
+$\mathbb{A}^r$ as identity while the mass matrix $\mathbb{M}^r$ is sparse and
+pentadiagonal. We refer reader to the original paper \cite{shen_paper} for the
+tabulated non-zero entries of the matrix. Finally the matrix the matrix of the two
+dimensional biharmonic operator $\mathbb{A}\in\mathbb{R}^{n^2\times n^2}$ is obtained
+as a Kronecker product of one dimensional mass matrix $\mathbb{M}\in\mathbb{R}^n$ and 
+the stiffness matrix $\mathbb{C}\in\mathbb{R}^n$, i.e. $\mathbb{A}^0 = \mathbb{M}\otimes\mathbb{I} + 
+2\mathbb{C}\otimes\mathbb{C} + \mathbb{I}\otimes\mathbb{M}$. We note that the
+condition number of matrix $\mathbb{A}^0$ grows exponentially with $n$.
+
+%sines
+To enforce simply supported boundary conditions onto solution of (\ref{eq:bar}) 
+we consider test spaces spanned by functions $E_k=\sqrt{\tfrac{2}{\pi}}\sin{kx}$,
+which are eigenfunctions of the eigenvalue problem for one dimensional biharmonic 
+operator
+\[
+  \begin{aligned}
+  \deriv{^4 u}{s^4} = \lambda u\text{ in }\mathcal{I},\\
+  u = \deriv{^2 u}{s^2} = 0\text{ on }\partial\mathcal{I}
+  \end{aligned}
+\]
+with the interval $\mathcal{I}=\left[0, \pi\right]$. The corresponding
+eigenvalues are $\lambda_k=k^4$.
+
+%$\mathbb{M}^r=\mathcal{I}, \mathbb{A}^r=\text{diag}\left(\lambda_k\right)$
+%$\mathbb{A}^0_{ij}=i^4 + 2 i^2 j^2 + j^4$. Scales as $n^4$
+
+%comparison
 
 \begin{table}[t!]
     \begin{center}
@@ -505,95 +452,8 @@ on the smallest eigenvalue of Schur. Simple configuration, ... . Maybe we can
 do two beams and see how lmin effects. I think it is best to be honest. If we
 try A, the cond increases for lmax, also we are not robust with respect to
 material and beam position ... So this should be future work.
-
-\section{Showcase}
-Will not have rates but we can show same domain multiple beans different bcs. If
-the nonlinearity is included.... If the precond works at least in one case solve
-the problem iteratively.
-% Preconditioning, uzawa, block lu
-
 \section{Conclusions and extensions}
 \label{sec:end}
-Combine different families of functions...
-
-
-
-
-
-
-
-
-Here we shall consider 
-the plate as a simply connected rectangular domain
-
-
-spanned 
-either by the basis functions presented in \cite{shen} or 
-
-
-Here we shall
-consider
-
-
-Here we shall consider domain 
-$\Omega$ 
-% global, sparse, spectral, framework components to solve (1) with only few
-% changes, basis are presented, discuss LBB in both by eigenvalue problems,
-% conclusies and future work
-
-
-%    \sum_{r=1}^k\frac{E_r}{2}\int_{\mathcal{I}}\deriv{^2u_r}{s^2}\deriv{^2u_r}{s^2}J_r^{-3}+
-%    \sum_{r=1}^k\int_{\mathcal{I}}\left(u_0\cdot F_r - u_r\right)\lambda_r J_r
-%  -\displaystyle\int_{\Omega}f u_0.
-%\]
-
-
-
-
-
-
-On the other hand, Galerkin method with test spaces spanned by functions with 
-global support is a natural choice for simply connected rectangular domains $\Omega$.
-
-
-
-We shall in Section \ref{sec:abstract} 
-% Lagrange 
-
-Here we
-shall consider test spaces spanned by the Legendre presented
-based on functions with a global support are a natural choice. 
-
-% For sufficiently smooth solution of (\ref{eq:foo}) the integration by parts yields
-% that $u$ solves the system
-% \begin{equation}
-%   \label{eq:bar}
-%   \begin{aligned}
-%     E_0\Delta^2 u_0 &= f\text{ in }\Omega\\
-%     E_r\deriv{^4 u_r}{s^4} &= 0 \text{ on }\mathcal{I}, r=1, 2,\cdots k\\
-%     u_0 &= u_r \circ F^{-1}_r \text{ on }\Gamma_r
-%   \end{aligned}
-% \end{equation}
-% subjected to the simply-supported boundary conditions
-% \[
-%   u\left(x\right) = \Delta u\left(x\right) = 0\quad x\in\partial\Omega\quad\text{and}\quad
-%   u_r\left(s_i\right) = \deriv{^2 u_r}{s^2}\left(s_i\right)=0\quad i = 0, 1
-% \]
-% or the clamped boundary conditions
-% \[
-%   u\left(x\right) = \frac{\partial u}{\partial n}\left(x\right) = 0\quad x\in\partial\Omega\quad\text{and}\quad
-%   u_r\left(s_i\right) = \deriv{u_r}{s}\left(s_i\right)=0\quad i = 0, 1.
-% \]
-% 
-% With a general domain $\Omega$ the problem (\ref{eq:foo}) is arguably best solved 
-% by splines or the finite element method. For the latter, special techniques are
-% required to handle the fourth order operators in (\ref{eq:bar}). The problem can
-% be discretized with 
-
-Here On the other hand, the plate $\Omega$ is a simple domain
-
-
-Due to biharmonic operator in (\ref{eq:bar}) the problem 
 
 \newpage
 \begin{thebibliography}{99}
