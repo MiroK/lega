@@ -7,7 +7,7 @@ from lega.integration import Quad1d
 import lega.biharmonic_clamped_basis as shen
 from lega.legendre_basis import ForwardLegendreTransformation as FLT
 from lega.common import tensor_product, timeit
-from scipy.sparse import kron, csr_matrix
+from scipy.sparse import kron, csr_matrix, eye
 from scipy.linalg import eigh
 from sympy import symbols
 import numpy as np

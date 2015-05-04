@@ -4,6 +4,9 @@ sys.path.append('..')
 from sine_assembler import SineSimpleAssembler
 from beam_defs import PiLineBeam
 from sympy.plotting import plot3d
+# from matplotlib import rc
+# rc('text', usetex=True) 
+# rc('font',**{'family':'sans-serif','sans-serif':['Helvetica']})
 import matplotlib.pyplot as plt
 from lega.sine_basis import sine_function
 from sympy import symbols, S, lambdify, pi as spi
@@ -14,11 +17,10 @@ import numpy as np
 # The problem is formulated on [-1, 1]^2. We want to desribe it domain of sine
 # which is [0, pi]^2. Call [0, pi] reference
 
-A0_ = [-1, -1]
-B0_ = [1, 1]
-
-A1_ = [-1, 1]
-B1_ = [0, -1]
+A0_ = [-2./3, -1]
+B0_ = [1., 0.]
+A1_ = [1, 2./3.]
+B1_ = [2./3, 1.]
 
 def to_ref(P):
     '''Take from [-1, 1]^2 to [0, pi]'''
@@ -30,10 +32,10 @@ A0, B0, A1, B1 = map(to_ref, (A0_, B0_, A1_, B1_))
 beam0 = PiLineBeam(A0, B0)
 beam1 = PiLineBeam(A1, B1)
 
-deg = 20
+deg = 10
 n_vector = [deg, deg, deg]
 beams = [beam0, beam1]
-materials = [0.1, 100, 10]
+materials = [1, 100, 10]
 foo = SineSimpleAssembler(n_vector=n_vector, beams=beams,
                           materials=materials)
 
@@ -42,13 +44,11 @@ x, y, s = symbols('x, y, s')
 # The force is mapped such that eval at pi, pi is f at [1, 1]
 foo.assemble_vec_blocks(fs=[S(1).subs({x: 2/spi*x - 1, y: 2/spi*x})])
 # Jacobian !
-for block in foo._vec_blocks:
-    block *= 2./pi
+foo._vec_blocks[0] *= 2./pi
 
 foo.assemble_mat_blocks()
 # Jacobian
-for block in foo._vec_blocks:
-    block *= (2./pi)**(-3)
+foo._Amat_blocks[0] *= (2./pi)**(-3)
 
 A, b = foo.assemble_system()
 X = np.linalg.solve(A.toarray(), b)
@@ -90,28 +90,48 @@ Z = uh_l(X.flatten(), Y.flatten()).reshape((n_points, n_points))
 plt.figure()
 plt.pcolor(X, Y, Z)
 plt.plot([A0_[0], B0_[0]], [A0_[1], B0_[1]], 'k', linewidth=2)
+c0_x = 0.5*(A0_[0]+B0_[0])
+c0_y = 0.5*(A0_[1]+B0_[1])
+plt.text(c0_x, c0_y, '1', color='m', size=16)
+
+
 plt.plot([A1_[0], B1_[0]], [A1_[1], B1_[1]], 'k', linewidth=2)
-plt.colorbar()
+c1_x = 0.5*(A1_[0]+B1_[0])
+c1_y = 0.5*(A1_[1]+B1_[1])
+plt.text(c1_x, c1_y, '2', color='m', size=16)
+
+
+plt.xlabel('$x$')
+plt.ylabel('$y$')
+plt.colorbar(format='%.3f')
+plt.savefig('sine_u0.pdf')
+
 
 # Plot beam
-for i, (wh, beam) in enumerate(zip(whs, beams)):
-    wh_val = lambdify(x, wh, 'numpy')(points)
-    plt.figure()
-    plt.plot(points, wh_val, label='$w_{%d}$' % i, color='blue')
-    
+colors = iter(['blue', 'green'])
+ax = plt.figure().gca()
+for i, (wh, beam) in enumerate(zip(whs, beams), 1):
+    color = next(colors)
+
     uh_ = uh.subs({x: 2/spi*x - 1, y: 2/spi*y - 1})   #[0, pi]
     uhr = beam.restrict(uh_)  # [0, pi] 
     uhr_ = uhr.subs({s: (spi*s + spi)/2})     # [-1, 1]
-    uh_rval = lambdify(s, uhr_, 'numpy')(points)
-    plt.plot(points, uh_rval, label='$T_{%d}(u)$' % i, color='green')
+    diff = lambdify(s, wh.subs(x, s) - uhr_, 'numpy')(points)
 
-    plt.legend()
+    plt.plot(points, diff, label='$u_0\circ F_%d - u_%d$' % (i, i), color=color)
+plt.xlabel('$s$')
+ax.yaxis.get_major_formatter().set_powerlimits((0, 1))
+plt.legend(loc='best')
+plt.savefig('sine_u0_ur.pdf')
 
 # Plot beam
-for i, lh in enumerate(lhs):
+plt.figure()
+for i, lh in enumerate(lhs, 1):
     lh_val = lambdify(x, lh, 'numpy')(points)
-    plt.figure()
     plt.plot(points, lh_val, label='$\lambda_{%d}$' % i)
-    plt.legend()
+
+plt.xlabel('$s$')
+plt.legend(loc='best')
+plt.savefig('sine_lmbda.pdf')
 
 plt.show()

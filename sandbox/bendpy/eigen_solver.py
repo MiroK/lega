@@ -76,21 +76,25 @@ if __name__ == '__main__':
     from beam_defs import PiLineBeam, LineBeam
     import matplotlib.pyplot as plt
     from math import pi
+    import sys
 
     BLUE = '\033[1;37;34m%s\033[0m'
     RED = '\033[1;37;31m%s\033[0m'
     GREEN = "\033[1;37;32m%s\033[0m"
 
-    # Robust for material
-    # Robust for position
-    # Robust for numner
+    problem = sys.argv[1]
 
-    problem = 'sine'
-    L = 1.
-    A0 = [L-1, -1]
-    B0 = [1, 1-L]
+    name = 'one_up_down'
+    A0 = [0, -1]
+    B0 = [0, 1]
     A1 = [-1, 0]
     B1 = [1, 0]
+
+    # name = 'bar'
+    # A0 = [-1., -1]
+    # B0 = [1, 1.]
+    # A1 = [-1., 1.]
+    # B1 = [1., -1.]
 
     if problem == 'sine':
         def to_ref(P):
@@ -112,10 +116,10 @@ if __name__ == '__main__':
     beams = [beam0, beam1]
     materials = [1, 1, 1]
 
-    s = -1.0
-    analysis = EigsAnalysis('%s_%d' % (problem, len(beams)))
-    for deg in range(5, 16, 2):
-        n_vector = [deg, deg, deg]
+    s = -1.
+    analysis = EigsAnalysis('s_%s_%s_%d' % (name, problem, len(beams)))
+    for deg in range(4, 25, 2):
+        n_vector = [deg, deg, deg] #, deg]
 
         foo = bar(n_vector=n_vector, beams=beams, materials=materials)
         AA_eigs, S_eigs = eigensolver(foo, s)
