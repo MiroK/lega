@@ -23,6 +23,7 @@
 \newcommand{\vvec}[1]{\ensuremath{\pmb{#1}}}
 \newcommand{\deriv}[2]{\ensuremath{\frac{\mathrm{d}#1}{\mathrm{d}#2}}}
 \newcommand{\tderiv}[2]{\ensuremath{\tfrac{\mathrm{d}#1}{\mathrm{d}#2}}}
+\newcommand{\mm}[1]{({\bf mm comment:} \emph{#1})}
 
 \title{
   BEND$\left|\text{P}\right|$Y: PYTHON FRAMEWORK FOR COMPUTING BENDING OF COMPLEX PLATE-BEAM SYSTEMS
@@ -58,7 +59,7 @@ and specialized Legendre polynomials are discussed.
 \section{Introduction}
 % What are we solving?
 In this paper we discuss Galerkin methods for finding the equilibrium state of a 
-physical system formed by a loaded thin plate and several beams which are constrained 
+physical system formed by a loaded thin plate and several beams that are constrained 
 to deform together with the plate. Denoting $k$ the number of supporting beams, 
 the equilibrium state is found as the solution of a constrained minimization problem
 \begin{equation}
@@ -82,13 +83,13 @@ vertical displacements of individual beams $u_r$, i.e., the scalar
 functions whose domain is the interval $\mathcal{I}$. Moreover each beam is
 considered as a set $\Gamma_r=\left\{x\in\Omega, x=F_r\left(s\right), s\in\mathcal{I}\right\}$
 defined by an invertible mapping $F_r$ with Jacobian $J_r$. Note that for straight 
-beams which are in focus of the presented work the Jacobian is simply the length of
-the beam divided by the length of the interval. The mapping $F_r$ is in addition 
+beams the Jacobian is simply the length of
+the beam divided by the length of the interval. The mapping $F_r$ is also 
 required to satisfy the conditions $F_r\left(s_0\right), F_r\left(s_1\right)\in\partial\Omega$ 
 for $s_0, s_1$ the endpoints of $\mathcal{I}$. No beam is thus allowed to end inside 
 the plate. Finally $f$ denotes the load while $E_0, E_r, r=1,2,\cdots k$ are 
 constant parameters which, following the Kirchhoff-Love and Euler-Bernoulli
-hypothesis (e.g. \cite{reddy}), depend on the material and geometry.
+hypothesis (see, e.g., \cite{reddy}), depend on the material and geometry.
 
 Introducing $k$ Lagrange multipliers $\lambda_k\in Q_k$, where the functions in 
 $Q_k$ map the interval $\mathcal{I}$ to scalars, the constrained problem 
@@ -114,15 +115,15 @@ method with test spaces spanned by the functions with local support. Regardless
 of the basis functions employed, the stable discretization of (\ref{eq:bar})
 requires that the Babu\v{s}ka-Brezzi conditions be satisfied by the constructed
 finite dimensional spaces. We remark that in addition to stability
-considerations the finite element discretization of problem is also complicated
-by presence of the biharmonic operator which requires techniques for fourth order 
+considerations the finite element discretization of the problem is also complicated
+by the presence of the biharmonic operator, which requires techniques for fourth order 
 problems (see e.g. \cite{brenner}). The approximations of $V$ must be constructed 
 from $C^1$ continuous elements, e.g. Argyris element \cite{argyris}, or non-conforming 
 elements, e.g. Morley element\cite{morley}. Alternatively, discontinuous elements with 
 suitable stabilization \cite{brenner_ip} can be used. 
 
 Here we shall consider the plate as a simply connected rectangular domain and as
-such focus on Galerkin methods with test functions having the global support.
+such focus on Galerkin methods with test functions having global support.
 Further, the two selected basis are designed for the fourth order problems and thus 
 only the Babu\v{s}ka-Brezzi theory needs to be considered to derive a stable
 discretization of problem (\ref{eq:bar}). The methods are discussed within a
@@ -157,7 +158,7 @@ unknowns $\left(u, \lambda\right)\in V\times Q$. These equations read
 To apply the Babu\v{s}ka-Brezzi theory of abstract saddle point problems to (\ref{eq:system})
 the system is rewritten in terms of bilinear forms $a:V\times V\mapsto \mathbb{R}$, $b:Q\times V\mapsto \mathbb{R}$
 and a linear form $L:V\mapsto R$. Here 
-$\ainner{u}{v}=\sum_{r=0}^{k}\ainner{u_r}{v_r}_r$ where
+$\ainner{u}{v}=\sum_{r=0}^{k}\ainner{u_r}{v_r}_r$ where \mm{Missing text}
 
 
 
@@ -184,9 +185,9 @@ endpoints of interval $\mathcal{I}$. These curves, and occasionally the
 respected mappings are referred to as \textit{beams}. In this paper we are for the
 most part concerned with straight/linear beams, that is, we consider mappings
 $\vec{F}_i\left(s\right)=\vec{P}_i\tfrac{s_1-s}{s_1-s_0}+\vec{Q}_i\tfrac{s_0-s}{s_0-s_1}$
-determined by pairs of mutually distinct points $\vec{P}_i, \vec{Q}_i$ which
-are located on the boundary of the plate. Note that in this case
-$J_i=\tfrac{\left|\vec{P}_i-\vec{Q}_i\right|}{2}$.
+determined by pairs of mutually distinct points $\vec{P}_i, \vec{Q}_i$ that
+are located on the boundary of the plate. \mm{Use that over which when the added sentence puts a restriction on the objects it refers to. E.g. dogs that are pink, not dogs which are pink.} Note that in this case
+$J_i=\tfrac{\left|\vec{P}_i-\vec{Q}_i\right|}{2}$. 
 % you do linear so absorb jacobian into material!!! KISS
 %
 %
@@ -194,7 +195,7 @@ $J_i=\tfrac{\left|\vec{P}_i-\vec{Q}_i\right|}{2}$.
 With these assumptions on geometry we let $V, \hat{V}_i, i=1, 2, \cdots, k$ denote
 spaces of functions that map respectively the plate and the beams to real
 numbers. By invertibility of $\vec{F}_i$ each function space $\hat{V}_i$ can be
-associated with a function space that $V_{i}$ that maps the reference interval
+associated with a function space $V_{i}$ that maps the reference interval
 $\mathcal{I}$ to real numbers. Indeed for $v\in V_i$ function
 $\hat{v}=v\circ\vec{F}_i$ belongs to $\hat{V}_i$.
 
@@ -213,7 +214,7 @@ pullback inverse.\textit{explain the constraint, trace, Sobolev?}.
 We build the constraint into the Lagrangian. To this end consider spaces $Q_i$
 and functions (Lagrange multipliers) $\lambda_i\in Q_i$. Moreover let
 $Q=Q_0\times Q_1\times\cdots\times Q_k$ and $\vvec{\lambda}\in
-Q,\vvec{\lambda}_i=\lambda_i$ and a problem
+Q,\vvec{\lambda}_i=\lambda_i$ \mm{???} and a problem
 \[
   \mathcal{L}\left(u, u_1, u_2, \cdots, u_k;\vvec{\lambda}\right)=
    \frac{E}{2}\displaystyle\int_{\Omega}\Delta u\,\Delta u+
@@ -222,7 +223,7 @@ Q,\vvec{\lambda}_i=\lambda_i$ and a problem
   -\displaystyle\int_{\Omega}f u - \sum_i\int_{\mathcal{I}}\left(u-u_i\right)\lambda_i J_i
 \]
 The necessary condition for extrema are then
-Under additional regularity we can make Euler Lagrange equations
+Under additional regularity we can make Euler Lagrange equations \mm{rewrite}
 \[
   \begin{aligned}
     E\Delta^2u &= f\quad\text{ in }\Omega\\
@@ -234,7 +235,7 @@ subjected to boundary conditions $u=0, \partial_nu=0$ and $u_i=0, \tderiv{u_i}{s
 $u=0, \Delta u=0$ and $u_i=0, \tderiv{^2u_i}{s^2}=0$. \textit{What are these called?}
 Abstract saddle $V:=V\times V_1, \times V_2, \cdots, \times V_k$,
 $V\ni\vvec{u}=\left(u, u_1, u_2, \cdots, u_k\right)$ and define bilinear form
-$a:V\times V\mapsto\mathbb{R}$ as
+$a:V\times V\mapsto\mathbb{R}$ as \mm{missing $v$ }
 \[
   \ainner{\vvec{u}}{\vvec{v}} = 
   E\displaystyle\int_{\Omega}\Delta u\,\Delta+
