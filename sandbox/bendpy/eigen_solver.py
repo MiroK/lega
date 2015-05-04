@@ -116,8 +116,8 @@ if __name__ == '__main__':
     beams = [beam0, beam1]
     materials = [1, 1, 1]
 
-    s = None
-    analysis = EigsAnalysis('%s_%s_%d' % (name, problem, len(beams)))
+    s = -1.
+    analysis = EigsAnalysis('s_%s_%s_%d' % (name, problem, len(beams)))
     for deg in range(4, 25, 2):
         n_vector = [deg, deg, deg] #, deg]
 

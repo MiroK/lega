@@ -22,7 +22,7 @@ B1 = [2./3, 1.]
 beam0 = LineBeam(A0, B0)
 beam1 = LineBeam(A1, B1)
 
-deg = 20
+deg = 10
 n_vector = [deg, deg, deg]
 beams = [beam0, beam1]
 materials = [1, 100, 10]
@@ -65,25 +65,44 @@ Z = uh_l(X.flatten(), Y.flatten()).reshape((n_points, n_points))
 plt.figure()
 plt.pcolor(X, Y, Z)
 plt.plot([A0[0], B0[0]], [A0[1], B0[1]], 'k', linewidth=2)
+c0_x = 0.5*(A0[0]+B0[0])
+c0_y = 0.5*(A0[1]+B0[1])
+plt.text(c0_x, c0_y, '1', color='m', size=16)
+
 plt.plot([A1[0], B1[0]], [A1[1], B1[1]], 'k', linewidth=2)
-plt.colorbar()
+c1_x = 0.5*(A1[0]+B1[0])
+c1_y = 0.5*(A1[1]+B1[1])
+plt.text(c1_x, c1_y, '2', color='m', size=16)
+
+
+plt.xlabel('$x$')
+plt.ylabel('$y$')
+cb = plt.colorbar(format='%.3f')
+plt.savefig('shen_u0.pdf')
 
 # Plot beam
-for i, (wh, beam) in enumerate(zip(whs, beams)):
-    wh_val = lambdify(x, wh, 'numpy')(points)
-    plt.figure()
-    plt.plot(points, wh_val, label='$w_{%d}$' % i, color='blue')
+colors = iter(['blue', 'green'])
+ax = plt.figure().gca()
+for i, (wh, beam) in enumerate(zip(whs, beams), 1):
+    color = next(colors)
+    # wh_val = lambdify(x, wh, 'numpy')(points)
+    # plt.plot(points, wh_val, label='$w_{%d}$' % i, color='blue')
     
-    uh_rval = lambdify(s, beam.restrict(uh), 'numpy')(points)
-    plt.plot(points, uh_rval, label='$T_{%d}(u)$' % i, color='green')
-
-    plt.legend()
+    uh_rval = lambdify(s, beam.restrict(uh) - wh.subs(x, s), 'numpy')(points)
+    plt.plot(points, uh_rval, label='$u_0\circ F_%d - u_%d$' % (i, i),
+            color=color)
+plt.xlabel('$s$')
+ax.yaxis.get_major_formatter().set_powerlimits((0, 1))
+plt.legend(loc='best')
+plt.savefig('shen_u0_ur.pdf')
 
 # Plot beam
-for i, lh in enumerate(lhs):
+plt.figure()
+for i, lh in enumerate(lhs, 1):
     lh_val = lambdify(x, lh, 'numpy')(points)
-    plt.figure()
     plt.plot(points, lh_val, label='$\lambda_{%d}$' % i)
-    plt.legend()
+plt.legend(loc='best')
+plt.savefig('shen_lmbda.pdf')
 
+plt.xlabel('$s$')
 plt.show()
