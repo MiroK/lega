@@ -34,6 +34,8 @@
 \newcommand{\deriv}[2]{\ensuremath{\frac{\mathrm{d}#1}{\mathrm{d}#2}}}
 \newcommand{\tderiv}[2]{\ensuremath{\tfrac{\mathrm{d}#1}{\mathrm{d}#2}}}
 
+\bibliographystyle{plain}
+
 \title{
   BEND$\left|\text{P}\right|$Y: PYTHON FRAMEWORK FOR COMPUTING BENDING OF COMPLEX PLATE-BEAM SYSTEMS
 }
@@ -129,7 +131,7 @@ by the presence of the biharmonic operator, which requires techniques for fourth
 problems (see, e.g., \cite{brenner}). The approximations of $V$ must be constructed 
 from $C^1$ continuous elements, e.g., the Argyris element \cite{argyris}, or non-conforming 
 elements like the Morley element\cite{morley}. Alternatively, discontinuous elements with 
-suitable stabilization \cite{brenner_ip} can be used. 
+suitable stabilization \cite{brennerip} can be used. 
 
 Here we shall consider the plate as a simply connected rectangular domain and as
 such focus on Galerkin methods with test functions having global support.
@@ -282,13 +284,14 @@ be tabulated. With these choices computing the matrices $\mathbb{C}^r$ remains t
 only bottleneck of the assembly process. 
 
 % Some comments on python bmat, sympy.lambdify vectorize numpy leggauss.
-In $\text{Bend}\!\left|\text{P}\right|\!\text{y}$ the integration of matrices $\mathbb{C}^r$ is built on top of
+In $\text{Bend}\!\left|\text{P}\right|\!\text{y}$\footnote{The source code
+can be obtained from https://github.com/MiroK/lega/tree/bendpy} the integration of matrices $\mathbb{C}^r$ is built on top of
 {\tt{NumPy}}\cite{numpy} and {\tt{SymPy}}\cite{sympy} modules. Specifically, using
 {\tt{sympy.lambdify}} function, each integrand is turned from a symbolic representation 
 to a lambda function which is vectorized for fast evaluation of {\tt{Numpy}}
 arrays which represent the points of the Gauss-Legendre quadrature. The remaining
 matrices of the linear system (\ref{eq:sysAB}) are sparse and efficiently stored
-in the compressed sparsed row containers provided by {\tt{scipy.sparse}} module.
+in the compressed sparse row containers provided by {\tt{scipy.sparse}} module.
 The two sets of basis functions which are currently supported by $\text{Bend}\!\left|\text{P}\right|\!\text{y}$
 are discussed in the next section.
 
@@ -314,7 +317,7 @@ Both boundary conditions are supported in $\text{Bend}\!\left|\text{P}\right|\!\
 
 The clamped boundary conditions are enforced onto the solution by constructing
 the test spaces of the Galerkin method from functions $S_i$ presented in Shen
-\cite{shen_paper}. Functions $S_i$ defined over the interval
+\cite{shenpaper}. Functions $S_i$ defined over the interval
 $\mathcal{I}=\left[-1, 1\right]$ are linear combinations of Legendre
 polynomials where the coefficients of the combinations are chosen such that
 $S_i=0, \tderiv{S_i}{s}=0$ in the endpoints of the domain. To span an $n$
@@ -325,7 +328,7 @@ products of the first $n$ functions in each Cartesian direction, that is, the ba
 functions have the form $S_i\left(x\right)S_j\left(y\right)$. Further the choice of
 Shen basis functions yields matrices such that the one dimensional bending matrix
 $\mathbb{A}^r$ is the identity matrix while the mass matrix $\mathbb{M}^r$ is sparse and
-pentadiagonal. We refer the reader to the original paper \cite{shen_paper} for the
+pentadiagonal. We refer the reader to the original paper \cite{shenpaper} for the
 tabulated non-zero entries of the matrix. Finally the matrix of the two-dimensional 
 biharmonic operator $\mathbb{A}\in\mathbb{R}^{n^2\times n^2}$ is obtained
 as a Kronecker product of one-dimensional mass matrix $\mathbb{M}\in\mathbb{R}^n$ and 
@@ -416,9 +419,10 @@ order is greater then four.}
   equations. Interpreting these as subproblems in the system (\ref{eq:bar}) we
   claim that the methods are suitable also to tackle the complex plate-beam system.
   At the time of writing we are unable to provide a support for this claim in
-  the form of a convergence study. However Figure \ref{fig:solutions} shows that
-  the solutions obtained by the method are physical and the constrains remain
-  well respected.
+  the form of a convergence study. However as can bee seen in Figure \ref{fig:solutions} 
+  the solutions obtained by the numerical methods are physical. The effect of
+  stiffeners is clearly visible in the displacement of the plate. Moreover the 
+  constrains remain well respected.
 
 \begin{table}[t!]
     \begin{center}
@@ -453,7 +457,7 @@ $n$  &  $f_0: \norm{e}_0$  & $f_1: \norm{e}_0$ & $f_2: \norm{e}_0$ & $f_3: \norm
   \end{center}
   \end{table}
 
- \begin{figure}[ht]
+ \begin{figure}[t!]
  \centering
  \includegraphics[width=0.45\textwidth]{img/shen_u0}
  \includegraphics[width=0.45\textwidth]{img/sine_u0}\\
@@ -489,6 +493,28 @@ needed. However with larger spaces the linear systems quickly become stiff and
 the obtained solution might suffer from round-off errors. This problem can be
 avoided by solving a preconditioned problem. Here we shall hint on a part of the
 suitable preconditioner. Note that for simplicity we set $E_r=1$ for all $r$.
+ \begin{figure}[t!]
+ \centering
+ \includegraphics[width=0.45\textwidth]{img/shen_cond}
+ \includegraphics[width=0.45\textwidth]{img/sine_cond}\\
+ \includegraphics[width=0.45\textwidth]{img/shen_spectrum}
+ \includegraphics[width=0.45\textwidth]{img/sine_spectrum}\\
+ \caption{Condition number and spectra of linear systems stemming from
+ discretization of the plate-beam system (\ref{eq:bar}) by Shen polynomials
+ (left) and eigenfunctions (right) for different degrees $n$. Two beam arrangements 
+ are considered. Subscripts one corresponds to a single vertical beam
+ $\left[0, -1\right]-\left[0, 1\right]$. Arrangement where a horizontal beam 
+$\left[-1, 0\right]-\left[1, 0\right]$ is added is denoted by subscript two.
+For both discretizations the condition numbers grows roughly as
+$\kappa\propto\exp{n^{1/\alpha}}$, where $\alpha$ for the Shen basis is much
+larger than for the eigenfunctions. The presence of the second beam has little to
+no effect on the rate. In the bottom row the dependence of the smallest and largest
+eigenvalues $\lambda_{min}, \lambda_{max}$ of the system on the degree is shown. 
+The largest eigenvalues are stable, while the smallest ones go zero and are this 
+the cause of the growth of the condition number $\kappa$.
+ }
+ \label{fig:no_precon}
+ \end{figure}
 
 Investigating the spectra of linear systems in Figure \ref{fig:no_precon} it is
 clear that the growth of the condition number is mainly due to the fact that the
@@ -518,30 +544,8 @@ of eigenfunctions we have $\mathbb{V}=\mathbb{I}$ and $\Lambda=\mathbb{A}$. The
 smallest eigenvalue of the problem (\ref{eq:schur}) with the constructed matrix
 $\mathbb{N}$ is shown in Figure \ref{fig:schur}. The eigenvalue remains constant
 for all values of discretization parameter $n$.
- \begin{figure}[ht]
- \centering
- \includegraphics[width=0.45\textwidth]{img/shen_cond}
- \includegraphics[width=0.45\textwidth]{img/sine_cond}\\
- \includegraphics[width=0.45\textwidth]{img/shen_spectrum}
- \includegraphics[width=0.45\textwidth]{img/sine_spectrum}\\
- \caption{Condition number and spectra of linear systems stemming from
- discretization of the plate-beam system (\ref{eq:bar}) by Shen polynomials
- (left) and eigenfunctions (right) for different degrees $n$. Two beam arrangements 
- are considered. Subscripts one corresponds to a single vertical beam
- $\left[0, -1\right]-\left[0, 1\right]$. Arrangement where a horizontal beam 
-$\left[-1, 0\right]-\left[1, 0\right]$ is added is denoted by subscript two.
-For both discretizations the condition numbers grows roughly as
-$\kappa\propto\exp{n^{1/\alpha}}$, where $\alpha$ for the Shen basis is much
-larger than for the eigenfunctions. The presence of the second beam has little to
-no effect on the rate. In the bottom row the dependence of the smallest and largest
-eigenvalues $\lambda_{min}, \lambda_{max}$ of the system on the degree is shown. 
-The largest eigenvalues are stable, while the smallest ones go zero and are this 
-the cause of the growth of the condition number $\kappa$.
- }
- \label{fig:no_precon}
- \end{figure}
  
- \begin{figure}[ht]
+ \begin{figure}[h!]
  \centering
  \includegraphics[width=0.45\textwidth]{img/Schur_precond_shen_cond}
  \includegraphics[width=0.45\textwidth]{img/Schur_precond_sine_cond}\\
@@ -550,7 +554,7 @@ the cause of the growth of the condition number $\kappa$.
  to Shen. Result of the system discretized with eigenfunctions are shown on the
  right. The smallest eigenvalue $\beta_1, \beta_2$ for the system with one and
  two beams remain constant for all $n$.}
- \label{fig:Schur}
+ \label{fig:schur}
  \end{figure}
 Based on our findings and the theory of abstract preconditioner reviewed in
 \cite{kent} a possible preconditioner for the plate-beam system is a block
@@ -565,14 +569,17 @@ We note that the preconditioner is especially cheap to compute for the
 discretization with eigenfunctions. In fact it is then a diagonal matrix with
 tabulated values.
 
-The effect of the proposed preconditioner is shown in Figure \ref{eq:precond}.
+The effect of the proposed preconditioner is shown in Figure \ref{fig:precond}.
 The preconditioner has stabilized the smallest eigenvalues but at the same time 
 linear growth has been introduced to the largest eigenvalues. This growth translates 
 into a linear increase of the condition number of the system. This is certainly an 
 improvement over the unpreconditionerd case. However the ideal preconditioner
-would yield stable condition numbers.
+would yield stable condition numbers. Moreover the preconditioner has to be
+robust with respect to the material/gemetry properties $E_r$ as well as the
+beams arrangement. This aspect of the proposed preconditioner has not been
+investigated here.
 
- \begin{figure}[ht]
+ \begin{figure}[t]
  \centering
  \includegraphics[width=0.45\textwidth]{img/Precond_shen_cond}
  \includegraphics[width=0.45\textwidth]{img/Precond_sine_cond}\\
@@ -593,81 +600,108 @@ growth is due the growth of the largest eigenvalues of the systems}
 
 \section{Conclusions}
 \label{sec:end}
-fff
-% FIXME references
-% FIXME typos
-% FIXME consistency
-%%%%%%
+In this paper we have discussed generic mathematical abstractions that lead to efficient
+implementation of Galerkin methods for the constrained optimization problem
+describing the coupled deformation of a thin plate supported by an arbitrary arrangement 
+of support beams. Two specific sets of basis functions based on linear combinations of 
+Legendre polynomials have been described. Both methods have been implemented in a python package 
+$\text{Bend}\!\left|\text{P}\right|\!\text{y}$ which was used to explore efficient 
+preconditioners for the resulting linear system. Some elements of the efficient
+preconditioner have been identified. A complete robust preconditioner is currently
+being pursued and is the topic of future work.
+%precond
+%future
 
+%\bibliography{bendpy.bib}
 \newpage
-\begin{thebibliography}{99}
+\begin{thebibliography}{10}
 
-\bibitem{reddy} Reddy B.D., \textit{Introductory functional analysis: with applications
-  to boundary value problems and finite elements}, Springer, (1998).
+\bibitem{argyris}
+JH~Argyris, I~Fried, and DW~Scharpf.
+\newblock The tuba family of plate elements for the matrix displacement
+  method(tuba family of plate elements for matrix displacement method based on
+  polynomial functions for deflections of triangular elements under
+  bending/trib/).
+\newblock {\em Aeronautical Journal}, 72:701--709, 1968.
 
-%\bibitem{brezzi} Brezzi F., On the existence, uniqueness and approximation of saddle-point problems arising from Lagrangian multipliers,
-%  \textit{Mathematical Modelling and Numerical Analysis-Mod{\'e}lisation Math{\'e}matique et Analyse Num{\'e}rique},
-%  (1974), 
-%  \textbf{8}: 129--151.
-%
-%\bibitem{brenner} Brenner S.C. and Scott R., \textit{The Mathematical Theory of Finite Element Methods},
-%  Springer, (2008).
-%
-%\bibitem{babuska} Babu\v{s}ka I., The finite element method with Lagrangian
-%  multipliers, \textit{Numerische Mathematik}, (1973), \textbf{20(3)}: 179--192.
-%
-%\bibitem{sympy} {{SymPy Development Team}},
-%  \textit{SymPy: Python library for symbolic mathematics}, (2014),
-%  http://www.sympy.org.
-%
-%\bibitem{shen} Shen, J., Efficient spectral-Galerkin method I. Direct solvers of
-%  second-and fourth-order equations using Legendre polynomials, \textit{SIAM
-%  Journal on Scientific Computing}, (1994), \textbf{15(6)}: 1489--1505.
-%
-  % \bibitem{numpy}
-  %   @Misc{,
-  %   author =    {Eric Jones and Travis Oliphant and Pearu Peterson and others},
-  %   title =     {{SciPy}: Open source scientific tools for {Python}},
-  %   year =      {2001--},
-  %   url = "http://www.scipy.org/",
-  %   note = {[Online; accessed 2015-05-03]}
-  % }
-  % 
-  % \bibitem{cython}
-  % Stefan Behnel, Robert Bradshaw, Craig Citro, Lisandro Dalcin, Dag Sverre Seljebotn and Kurt Smith. Cython: The Best of Both Worlds, Computing in Science and Engineering, 13, 31-39 (2011),
-  % 
-  % 
-  % \bibitem{fenics}
-  %   Logg A., Mardal K.-A., Wells G.N. et al.,
-  %   \textit{Automated Solution of Differential Equations by the Finite Element Method},
-  %   Springer, (2012).
-  % 
-  % \bibitem{swig}
-  %   @inproceedings{Beazley:1996:SEU:1267498.1267513,
-  %  author = {Beazley, David M.},
-  %  title = {SWIG: An Easy to Use Tool for Integrating Scripting Languages with C and C++},
-  %  booktitle = {Proceedings of the 4th Conference on USENIX Tcl/Tk Workshop, 1996 - Volume 4},
-  %  series = {TCLTK'96},
-  %  year = {1996},
-  %  location = {Monterey, California},
-  %  pages = {15--15},
-  %  numpages = {1},
-  %  url = {http://dl.acm.org/citation.cfm?id=1267498.1267513},
-  %  acmid = {1267513},
-  %  publisher = {USENIX Association},
-  %  address = {Berkeley, CA, USA},
-  % } 
-  % 
-  % \bibitem{oasis}
-  % @article{mortensen2015oasis,
-  %   title={Oasis: A high-level/high-performance open source Navier--Stokes solver},
-  %   author={Mortensen, Mikael and Valen-Sendstad, Kristian},
-  %   journal={Computer Physics Communications},
-  %   volume={188},
-  %   pages={177--188},
-  %   year={2015},
-  %   publisher={North-Holland}
-  % }
+\bibitem{babuska}
+Ivo Babuška.
+\newblock The finite element method with lagrangian multipliers.
+\newblock {\em Numerische Mathematik}, 20(3):179--192, 1973.
+
+\bibitem{benzi}
+Michele Benzi, Gene~H Golub, and Jorg Liesen.
+\newblock Numerical solution of saddle point problems.
+\newblock {\em Acta numerica}, 14(1):1--137, 2005.
+
+\bibitem{brenner}
+S.C. Brenner and R.~Scott.
+\newblock {\em The Mathematical Theory of Finite Element Methods}.
+\newblock Texts in Applied Mathematics. Springer, 2008.
+
+\bibitem{brennerip}
+SusanneC. Brenner and Li-Yeng Sung.
+\newblock C$^0$ interior penalty methods for fourth order elliptic boundary value
+  problems on polygonal domains.
+\newblock {\em Journal of Scientific Computing}, 22-23(1-3):83--118, 2005.
+
+\bibitem{brezzi}
+F.~Brezzi.
+\newblock On the existence, uniqueness and approximation of saddle-point
+  problems arising from lagrangian multipliers.
+\newblock {\em ESAIM: Mathematical Modelling and Numerical Analysis -
+  Modélisation Mathématique et Analyse Numérique}, 8(R2):129--151, 1974.
+
+\bibitem{malkus}
+DS~Malkus.
+\newblock Eigenproblems associated with the discrete lbb condition for
+  incompressible finite elements.
+\newblock {\em International Journal of Engineering Science},
+  19(10):1299--1310, 1981.
+
+\bibitem{kent}
+Kent-Andre Mardal and Ragnar Winther.
+\newblock Preconditioning discretizations of systems of partial differential
+  equations.
+\newblock {\em Numerical Linear Algebra with Applications}, 18(1):1--40, 2011.
+
+\bibitem{morley}
+LSD Morley.
+\newblock The triangular equilibrium element in the solution of plate bending
+  problems.
+\newblock {\em Aero. Quart}, 19:149--169, 1968.
+
+\bibitem{quarteroni}
+Alfio Quarteroni.
+\newblock {\em Numerical models for differential problems}, volume~2.
+\newblock Springer, 2009.
+
+\bibitem{reddy}
+B.D. Reddy.
+\newblock {\em Introductory Functional Analysis: With Applications to Boundary
+  Value Problems and Finite Elements}.
+\newblock Springer, 1998.
+
+\bibitem{marie}
+Marie~E Rognes.
+\newblock Automated testing of saddle point stability conditions.
+\newblock In {\em Automated Solution of Differential Equations by the Finite
+  Element Method}, pages 657--671. Springer Berlin Heidelberg, 2012.
+
+\bibitem{shenpaper}
+Jie Shen.
+\newblock Efficient spectral-galerkin method i: Direct solvers of second-and
+  fourth-order equations using legendre polynomials.
+\newblock {\em SIAM J. Sci. Comput.}, 15(6):1489--1505, 1994.
+
+\bibitem{sympy}
+{SymPy Development Team}.
+\newblock {\em SymPy: Python library for symbolic mathematics}, 2014.
+
+\bibitem{numpy}
+Stéfan van~der Walt, S.~Chris Colbert, and Gaël Varoquaux.
+\newblock The numpy array: A structure for efficient numerical computation.
+\newblock {\em Computing in Science \& Engineering}, 13(2):22--30, 2011.
 
 \end{thebibliography}
 \end{document}
