@@ -299,9 +299,9 @@ problem (\ref{eq:bar}) the integration by parts yields that the solution $u$ als
 satisfies the system of partial differential equations
 \[
   \begin{aligned}
-    E\Delta^2u &= f\quad\text{ in }\Omega\\
-    E_i\deriv{^4 u_i}{s^4} &= 0\quad\text{ on }\mathcal{I}\\
-    u &= u_i\quad\text{ on }\mathcal{I}\\
+    E_0\Delta^2u_0 &= f\quad\text{ in }\Omega\\
+    E_r\deriv{^4 u_r}{s^4} &= 0\quad\text{ on }\mathcal{I}\\
+    u \circ F_r&= u_r\quad\text{ on }\mathcal{I}\\
   \end{aligned}
 \]
 subjected to boundary conditions $u=0, \partial_nu=0$ on $\partial\Omega $and 
@@ -335,7 +335,7 @@ condition number of matrix $\mathbb{A}^0$ grows exponentially with $n$.
 
 %sines
 To enforce simply supported boundary conditions onto solution of (\ref{eq:bar}) 
-we consider test spaces spanned by functions $E_k=\sqrt{\tfrac{2}{\pi}}\sin{kx}$,
+we consider test spaces constructed from functions $E_k=\sqrt{\tfrac{2}{\pi}}\sin{kx}$,
 which are eigenfunctions of the eigenvalue problem for one dimensional biharmonic 
 operator
 \[
@@ -345,20 +345,54 @@ operator
   \end{aligned}
 \]
 with the interval $\mathcal{I}=\left[0, \pi\right]$. The corresponding
-eigenvalues are $\lambda_k=k^4$.
-
-%$\mathbb{M}^r=\mathcal{I}, \mathbb{A}^r=\text{diag}\left(\lambda_k\right)$
-%$\mathbb{A}^0_{ij}=i^4 + 2 i^2 j^2 + j^4$. Scales as $n^4$
+eigenvalues are $\lambda_k=k^4$. In complete analogy to the spaces spanned by
+functions due to Shen, the basis of the $n$-dimensional space $\Vh^r, r>0$ over
+$\mathcal{I}$ is formed by first $n$ eigenfunctions $E_k$. The basis of the
+space $\Vh^0$ defined over $\Omega=\mathcal{I}\times\mathcal{I}$ are then formed
+as tensor products. Attractive property of the eigenfunctions $E_k$ is the fact
+that all the matrices $\mathbb{A}^r$, $\mathbb{M}^r$ are diagonal. Indeed we
+have $\mathbb{M}^r=\mathbb{I}$, while $\mathbb{A}^r\in\mathbb{R}^{n \times n},
+r>0$ takes the form $\mathbb{A}^r=\text{diag}\left(\lambda_k, k=1, 2, \cdots
+n\right)$. Finally the two dimensional bending matrix is defined as $\mathbb{A}^0_{ij}=
+\Lambda_{ij}\delta_{ij}$ with the diagonal values $\Lambda_{ij}= i^4 + 2 i^2 j^2 + j^4$.
+It is clear that the condition number of the matrix grows as $n^4$. 
 
 %comparison
-
+We shall now compare the convergence properties of the two basis on a simple one
+dimensional biharmonic problem
+\begin{equation}
+  \label{eq:test}
+  \deriv{^4u}{s^4} = f\text{ in }\left(-1, 1 \right)\quad\text{ with }f(x)=\begin{cases}
+      g(x) & x \leq 0 \\
+      h(x) & x > 0 \\
+    \end{cases},
+  \end{equation}
+which can be viewed as a building block of the complex-plate beam system (\ref{eq:foo}).
+We remark that the Shen basis solves the problem (\ref{eq:test}) with clamped
+boundary conditions, while for the basis of eigenfunction simply supported
+boundary conditions are used. The problem is considered with four different right 
+hand sides $f_i$. It can be seen that each function $f_i$ is determined by two functions, $g, h$. This
+property is symbolically denoted as $f_i=\left(g, h\right)$. With this
+convention, the right hand sides considered are $f_0=\inner{1}{2}$, $f_1=\inner{f}{x+1}$,
+$f_2=\inner{x^2/2 + x/4 + 3/4}{h=-x^2 + x/4 + 3/4}$ and
+$f_3=\inner{\exp{x}\sin{5x}}{\exp{x}\sin{5x}}$. The functions $f_i$ are
+respectively $L^2, H^1, H^2$ and $C^{\infty}$ smooth. The smoothness of the
+solution $u$ of (\ref{eq:test}) is then four degrees higher than the given
+right-hand side. As such, in all but the last case, fixed convergence is to be
+expected from the Galerkin method with Shen basis functions. In the last case
+the method should converge exponentially. These expectations are confirmed by
+the results shown in Table \ref{tab:shen_convergence}. On the other hand simple error
+estimate for the Galerkin method with eigenfunctions $E_k$ shows that the $L^2$
+norm of the error is bounded as $\norm{e}_0\leq\tfrac{\norm{f}_0}{n^4}$. The
+error of the solution should therefore decrease no slower than quadratically.
+This estimate is confirmed by the results listed in Table
+\ref{tab:sine_convergence}.
 \begin{table}[t!]
     \begin{center}
     \begin{tabular}{ccccc}
 \hline
 $n$  &  $f_0: \norm{e}_0$  & $f_1: \norm{e}_0$ & $f_2: \norm{e}_0$ & $f_3: \norm{e}_0$\\
 \hline
-4    & 1.0577E-04(3.61) & 9.9167E-05(3.81) &       --        & 1.4040E-04(2.46) \\
 8    & 6.1251E-06(4.11) & 5.7545E-06(4.11) & 2.8982E-08(5.84)& 6.2305E-06(4.49) \\
 16   & 2.9912E-07(4.36) & 2.8123E-07(4.35) & 4.1493E-10(6.13)& 3.0082E-07(4.37) \\
 32   & 1.3929E-08(4.42) & 1.4545E-08(4.27) & 4.8407E-12(6.42)& 1.4161E-08(4.41) \\
@@ -368,11 +402,19 @@ $n$  &  $f_0: \norm{e}_0$  & $f_1: \norm{e}_0$ & $f_2: \norm{e}_0$ & $f_3: \norm
 \hline
 \hline
     \end{tabular}
-    \caption{sines}
+    \caption{The error and convergence rate of the Galerkin method with eigenfunctions for
+    problem (\ref{eq:test}) with simply supported boundary conditions.
+  Irrespective of the regularity of the right-hand sides $f_i$ the method
+converges with fixed order. In agreement with the theoretical analysis, the
+order is greater then four.}
   \label{tab:sine_convergence}
   \end{center}
   \end{table}
 
+  The results presented thus far have validated the Galerkin method with basis
+  of Shen functions and eigenfunctions as viable methods to solve the biharmonic
+  equations. Interpreting these are subproblems in the system (\ref{eq:bar}) the
+  methods are suitable also to tackle the complex plate-beam system.
 
 \begin{table}[t!]
     \begin{center}
@@ -396,64 +438,70 @@ $n$  &  $f_0: \norm{e}_0$  & $f_1: \norm{e}_0$ & $f_2: \norm{e}_0$ & $f_3: \norm
 30&  2.0739E-08(6.43)& 9.6124E-10(4.20)& 1.7277E-11(8.39)& 2.7543E-11(-38.74)\\
 \hline
     \end{tabular}
-    \caption{shen}
+    \caption{
+    The error and convergence rate of the Galerkin method with Shen basis for
+    problem (\ref{eq:test}) with clamped boundary conditions. Fixed order
+    convergence for the first three right hand sides and exponential convergence
+    for $f_3$ confirm that the convergence rate is determined by the regularity of 
+    the solution.
+    }
   \label{tab:shen_convergence}
   \end{center}
   \end{table}
 
-
-
- %\begin{figure}[ht]
- %\centering
- %\includegraphics[width=0.45\textwidth]{img/shen_u0}
- %\includegraphics[width=0.45\textwidth]{img/sine_u0}\\
- %\includegraphics[width=0.45\textwidth]{img/shen_u0_ur}
- %\includegraphics[width=0.45\textwidth]{img/sine_u0_ur}\\
- %\caption{
- %}
- %\label{fig:conds}
- %\end{figure}
- %
- %
- %\begin{figure}[ht]
- %\centering
- %\includegraphics[width=0.45\textwidth]{img/shen_cond}
- %\includegraphics[width=0.45\textwidth]{img/sine_cond}\\
- %\includegraphics[width=0.45\textwidth]{img/shen_spectrum}
- %\includegraphics[width=0.45\textwidth]{img/sine_spectrum}\\
- %\caption{}
- %\label{fig:no_precon}
- %\end{figure}
- %
- %\begin{figure}[ht]
- %\centering
- %\includegraphics[width=0.45\textwidth]{img/Schur_precond_shen_cond}
- %\includegraphics[width=0.45\textwidth]{img/Schur_precond_sine_cond}\\
- %\caption{}
- %\label{fig:Schur}
- %\end{figure}
- %
- %\begin{figure}[ht]
- %\centering
- %\includegraphics[width=0.45\textwidth]{img/precond_shen_cond}
- %\includegraphics[width=0.45\textwidth]{img/precond_sine_cond}\\
- %\includegraphics[width=0.45\textwidth]{img/precond_shen_spectrum}
- %\includegraphics[width=0.45\textwidth]{img/precond_sine_spectrum}\\
- %\caption{}
- %\label{fig:precond}
- %\end{figure}
-
-\section{Eigenvalues}
+\section{HOW SHOULD WE CALL THIS}
 \label{sec:lbb}
-When the basis are explained. We show kappa of both matrices as matrix
-increases-preconditioner is needed for it locks (1beam 2 beams). The story has
-to be that we are looking for the preconditioner but not find it yet. We focus
-on the smallest eigenvalue of Schur. Simple configuration, ... . Maybe we can
-do two beams and see how lmin effects. I think it is best to be honest. If we
-try A, the cond increases for lmax, also we are not robust with respect to
-material and beam position ... So this should be future work.
+
+
+
+ \begin{figure}[ht]
+ \centering
+ \includegraphics[width=0.45\textwidth]{img/shen_u0}
+ \includegraphics[width=0.45\textwidth]{img/sine_u0}\\
+ \includegraphics[width=0.45\textwidth]{img/shen_u0_ur}
+ \includegraphics[width=0.45\textwidth]{img/sine_u0_ur}\\
+ \caption{xxx
+ }
+ \label{fig:conds}
+ \end{figure}
+ %
+ %
+ \begin{figure}[ht]
+ \centering
+ \includegraphics[width=0.45\textwidth]{img/shen_cond}
+ \includegraphics[width=0.45\textwidth]{img/sine_cond}\\
+ \includegraphics[width=0.45\textwidth]{img/shen_spectrum}
+ \includegraphics[width=0.45\textwidth]{img/sine_spectrum}\\
+ \caption{}
+ \label{fig:no_precon}
+ \end{figure}
+ 
+ \begin{figure}[ht]
+ \centering
+ \includegraphics[width=0.45\textwidth]{img/Schur_precond_shen_cond}
+ \includegraphics[width=0.45\textwidth]{img/Schur_precond_sine_cond}\\
+ \caption{}
+ \label{fig:Schur}
+ \end{figure}
+ 
+ \begin{figure}[ht]
+ \centering
+ \includegraphics[width=0.45\textwidth]{img/precond_shen_cond}
+ \includegraphics[width=0.45\textwidth]{img/precond_sine_cond}\\
+ \includegraphics[width=0.45\textwidth]{img/precond_shen_spectrum}
+ \includegraphics[width=0.45\textwidth]{img/precond_sine_spectrum}\\
+ \caption{}
+ \label{fig:precond}
+ \end{figure}
+
+
+
 \section{Conclusions and extensions}
 \label{sec:end}
+% FIXME references
+% FIXME typos
+% FIXME consistency
+%
 
 \newpage
 \begin{thebibliography}{99}
