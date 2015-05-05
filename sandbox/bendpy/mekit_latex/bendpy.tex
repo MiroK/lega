@@ -562,6 +562,10 @@ diagonal matrix
       0 & \mathbb{N}^{-1}
     \end{bmatrix}.
 \]
+We note that the preconditioner is especially cheap to compute for the
+discretization with eigenfunctions. In fact it is then a diagonal matrix with
+tabulated values.
+
 The effect of the proposed preconditioner is shown in Figure \ref{eq:precond}.
 The preconditioner has stabilized the smallest eigenvalues but at the same time 
 linear growth has been introduced to the largest eigenvalues. This growth translates 
