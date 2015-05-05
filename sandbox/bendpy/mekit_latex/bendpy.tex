@@ -4,6 +4,8 @@
 \usepackage{amsmath}
 \usepackage{amsfonts}
 \usepackage{amssymb}
+\usepackage{floatrow}
+\floatsetup[table]{capposition=top}
 
 \newcommand{\Amat}{\ensuremath{\mathbb{A}}}
 \newcommand{\Bmat}{\ensuremath{\mathbb{B}}}
@@ -11,8 +13,6 @@
 \newcommand{\uvec}{\ensuremath{\mathbf{u}}}
 \newcommand{\Uvec}{\ensuremath{\mathbf{U}}}
 \newcommand{\Pvec}{\ensuremath{\mathbf{P}}}
-
-
 
 \newcommand{\bend}{\ensuremath{\text{Bend}\left|\text{P}\right|\text{y}}}
 \newcommand{\RM}{\ensuremath{RM}}
@@ -76,8 +76,7 @@ the equilibrium state is found as the solution of a constrained minimization pro
   u = \min_{v\in V} \mathcal{E}\left(v\right)\quad\text{ and }\quad u_0\circ F_r
   = u_r, r=1, 2, \cdots k,
 \end{equation}
-where the energy functional $\mathcal{E}$ is defined for $u=\left(u_0, u_1,
-\cdots, u_k\right)$ as
+where the energy functional $\mathcal{E}$ is defined as
 \[
   \mathcal{E}\left(u\right)=
     \frac{E_0}{2}\displaystyle\int_{\Omega}\Delta u_0\,\Delta u_0+
@@ -93,13 +92,13 @@ vertical displacements of individual beams $u_r$, i.e., the scalar
 functions whose domain is the interval $\mathcal{I}$. Moreover each beam is
 considered as a set $\Gamma_r=\left\{x\in\Omega, x=F_r\left(s\right), s\in\mathcal{I}\right\}$
 defined by an invertible mapping $F_r$ with Jacobian $J_r$. Note that for straight 
-beams which are in focus of the presented work the Jacobian is simply the length of
+beams, which is the main focus of the present work, the Jacobian is simply the length of
 the beam divided by the length of the interval. The mapping $F_r$ is in addition 
 required to satisfy the conditions $F_r\left(s_0\right), F_r\left(s_1\right)\in\partial\Omega$ 
 for $s_0, s_1$ the endpoints of $\mathcal{I}$. No beam is thus allowed to end inside 
 the plate. Finally $f$ denotes the load while $E_0, E_r, r=1,2,\cdots k$ are 
-constant parameters which, following the Kirchhoff-Love and Euler-Bernoulli
-hypothesis (e.g. \cite{reddy}), depend on the material and geometry.
+constant parameters that, following the Kirchhoff-Love and Euler-Bernoulli
+hypothesis (see, e.g., \cite{reddy}), depend on the material and the geometry.
 
 Introducing $k$ Lagrange multipliers $\lambda_k\in Q_k$, where the functions in 
 $Q_k$ map the interval $\mathcal{I}$ to scalars, the constrained problem 
@@ -110,7 +109,7 @@ $\mathcal{L}$,
 \mathcal{L}\left(u, \lambda\right) = \mathcal{E}\left(u\right) +
   \sum_{r=1}^k\int_{\mathcal{I}}\left(u_0\circ F_r - u_r\right)\lambda_r J_r.
 \end{equation}
-The space $Q$ and function $\lambda\in Q$ are defined analogically as in (\ref{eq:foo}).
+The space $Q$ and function $\lambda\in Q$ are defined as in (\ref{eq:foo}).
 We note that the unconstrained problem (\ref{eq:bar}) is solvable only for
 suitable pair of spaces $V, Q$ for which the requirements of the
 Babu\v{s}ka-Brezzi\cite{babuska, brezzi} theory are satisfied.
@@ -118,7 +117,7 @@ Babu\v{s}ka-Brezzi\cite{babuska, brezzi} theory are satisfied.
 % It can be solved with FEM but simple geometry ... global functions, spectral
 % Galerkin
 For a complex domain $\Omega$ the finite element method is arguably the most 
-suitable method to solve the problem (\ref{eq:bar}). If, on the other hand, the
+suitable method to solve problem (\ref{eq:bar}). If, on the other hand, the
 domain is simple, the Galerkin method with globally supported basis functions
 can be applied. Note that the finite element method is an instance of the Galerkin 
 method with test spaces spanned by the functions with local support. Regardless
@@ -126,20 +125,20 @@ of the basis functions employed, the stable discretization of (\ref{eq:bar})
 requires that the Babu\v{s}ka-Brezzi conditions be satisfied on the constructed
 finite dimensional spaces. We remark that in addition to stability
 considerations the finite element discretization of problem is also complicated
-by presence of the biharmonic operator which requires techniques for fourth order 
-problems (see e.g. \cite{brenner}). The approximations of $V$ must be constructed 
-from $C^1$ continuous elements, e.g. Argyris element \cite{argyris}, or non-conforming 
-elements, e.g. Morley element\cite{morley}. Alternatively, discontinuous elements with 
+by the presence of the biharmonic operator, which requires techniques for fourth order 
+problems (see, e.g., \cite{brenner}). The approximations of $V$ must be constructed 
+from $C^1$ continuous elements, e.g., the Argyris element \cite{argyris}, or non-conforming 
+elements like the Morley element\cite{morley}. Alternatively, discontinuous elements with 
 suitable stabilization \cite{brenner_ip} can be used. 
 
 Here we shall consider the plate as a simply connected rectangular domain and as
-such focus on Galerkin methods with test functions having the global support.
-Further, the two selected basis are designed for the fourth order problems and thus 
+such focus on Galerkin methods with test functions having global support.
+Further, the two selected basis are designed for fourth order problems and thus 
 only the Babu\v{s}ka-Brezzi theory needs to be considered to derive a stable
 discretization of problem (\ref{eq:bar}). The methods are discussed within a
 framework for abstract saddle point problems reviewed in Section
 \ref{sec:abstract}. The framework serves to identify the few common
-elements(matrices) that are required to easily introduce Galerkin discretizations of
+elements (matrices) that are required to easily introduce Galerkin discretizations of
 (\ref{eq:bar}) based on any set of basis functions. Properties of the two sets of
 basis functions considered in this paper are then compared in Section \ref{sec:basis}.
 Finally in Section \ref{sec:lbb} the inf-sup condition for the two proposed
@@ -182,7 +181,7 @@ forms in the plate-beam system (\ref{eq:system}), let $a_0:V_0\times V_0\mapsto
 $a_r:V_r\times V_r\mapsto \mathbb{R}$ such that $\arinner{u_r}{v_r}=E_r\rinner{J_r^{-2}\tderiv{^2 u_r}{s^2}}{J_r^{-2}\tderiv{^2
 v_r}{s^2}}$ for $r=1, 2\cdots, k$. Moreover for we define $r$ bilinear forms
 $b_r:Q_r\times V\mapsto\mathbb{R}$ by
-$\brinner{\lambda_r}{u}=\rinner{u_0\circ F_r-u_r}{\lambda_r}$. It the follows 
+$\brinner{\lambda_r}{u}=\rinner{u_0\circ F_r-u_r}{\lambda_r}$. It then follows 
 that the bilinear forms $a$ and $b$ are simply
 \[
   \ainner{u}{v} = \displaystyle\sum_{r=0}^{k}\arinner{u_r}{v_r}\quad\text{ and
@@ -197,7 +196,7 @@ $\left(u, \lambda\right)\in V\times Q$ such that
   \left(v, \mu\right)\in V\times Q.
 \end{equation}
 
-To apply Galerkin method to system (\ref{eq:system}) we construct finite dimensional
+To apply the Galerkin method to system (\ref{eq:system}) we construct finite dimensional
 subspaces $\Vh\subset V$ and $\Qh\subset Q$ that approximate their continuous
 counter parts. As such the spaces $\Vh, \Qh$ have respectively $k+1$ and $k$
 components with their individual dimensions
@@ -268,16 +267,16 @@ on the beam. Note that the $\psi^r_j, j=1, 2,\cdots,\mathbf{m}_r$ denote the bas
 functions of the Lagrange multiplier space $\Qh^r$.
 
 It is clear from the structure of the matrices of the linear system
-(\ref{eq:sysAB}) that its assembly requires three types of procedures (i) For 
-every subspace $\Vh^r$ a matrix of discretizing the biharmonic operator is needed.
-Note that for all the components but $\Vh^0$ the biharmonic operator is one 
-dimensional. (ii). For every pair of spaces $\Vh^r, \Qh^r, r=1,2,\cdot k$ a mass
+(\ref{eq:sysAB}) that its assembly requires three types of procedures: (i) For 
+every subspace $\Vh^r$ a matrix resulting from discretization of the biharmonic operator is needed.
+Note that for all the components but $\Vh^0$ the biharmonic operator is one-dimensional. 
+(ii) For every pair of spaces $\Vh^r, \Qh^r, r=1,2,\cdots k$ a mass
 matrix $\mathbb{M}^r$ between the two spaces must be computed. (iii) Finally, for
-every space $\Qh^r$ there must be a procedure for the computing matrix $\mathbb{C}^r$
+every space $\Qh^r$ there must be a procedure for computing matrix $\mathbb{C}^r$,
 which can be interpreted as a mass matrix between $\Vh^0$ and the space
 $\Qh^r$. The number of procedures is thus significantly reduced if all the
 spaces involved in the discrete formulation are spanned by the same functions. A
-further step to speedy assembly is a choice of basis functions for which the
+further step to speed up assembly is a choice of basis functions for which the
 matrices $\mathbb{M}^r$ and $\mathbb{A}^r$ are sparse and the nonzero values can
 be tabulated. With these choices computing the matrices $\mathbb{C}^r$ remains the
 only bottleneck of the assembly process. 
@@ -296,16 +295,16 @@ are discussed in the next section.
 \section{Basis functions of the Galerkin method}
 \label{sec:basis}
 For sufficiently smooth solutions $\left(u, \lambda\right)$ of the saddle point
-problem (\ref{eq:bar}) the integration by parts yields that the solution $u$ also
+problem (\ref{eq:bar}) an integration by parts yields that the solution $u$ also
 satisfies the system of partial differential equations
 \[
   \begin{aligned}
-    E_0\Delta^2u_0 &= f\quad\text{ in }\Omega\\
-    E_r\deriv{^4 u_r}{s^4} &= 0\quad\text{ on }\mathcal{I}\\
-    u \circ F_r&= u_r\quad\text{ on }\mathcal{I}\\
+    E_0\Delta^2u_0 &= f\quad\text{ in }\Omega,\\
+    E_r\deriv{^4 u_r}{s^4} &= 0\quad\text{ on }\mathcal{I},\\
+    u \circ F_r&= u_r\quad\text{ on }\mathcal{I},\\
   \end{aligned}
 \]
-subjected to boundary conditions $u=0, \partial_nu=0$ on $\partial\Omega $and 
+subject to boundary conditions $u=0, \partial_nu=0$ on $\partial\Omega $ and 
 $u_i=0, \tderiv{u_i}{s}=0$ on $\partial\mathcal{I}$
 or $u=0, \Delta u=0$ on $\partial\Omega$ and $u_i=0, \tderiv{^2u_i}{s^2}=0$ on
 $\partial\mathcal{I}$. The first set of boundary conditions is known as clamped as
@@ -324,43 +323,43 @@ $n$ functions $S_i$ are taken as the basis. For $n^2$ dimensional space $\Vh^0$
 defined over $\Omega=\mathcal{I}\times\mathcal{I}$ we use as the basis functions 
 products of the first $n$ functions in each Cartesian direction, that is, the basis 
 functions have the form $S_i\left(x\right)S_j\left(y\right)$. Further the choice of
-Shen basis functions yields matrices the one dimensional bending matrix
-$\mathbb{A}^r$ as identity while the mass matrix $\mathbb{M}^r$ is sparse and
-pentadiagonal. We refer reader to the original paper \cite{shen_paper} for the
-tabulated non-zero entries of the matrix. Finally the matrix the matrix of the two
-dimensional biharmonic operator $\mathbb{A}\in\mathbb{R}^{n^2\times n^2}$ is obtained
-as a Kronecker product of one dimensional mass matrix $\mathbb{M}\in\mathbb{R}^n$ and 
-the stiffness matrix $\mathbb{C}\in\mathbb{R}^n$, i.e. $\mathbb{A}^0 = \mathbb{M}\otimes\mathbb{I} + 
+Shen basis functions yields matrices such that the one dimensional bending matrix
+$\mathbb{A}^r$ is the identity matrix while the mass matrix $\mathbb{M}^r$ is sparse and
+pentadiagonal. We refer the reader to the original paper \cite{shen_paper} for the
+tabulated non-zero entries of the matrix. Finally the matrix of the two-dimensional 
+biharmonic operator $\mathbb{A}\in\mathbb{R}^{n^2\times n^2}$ is obtained
+as a Kronecker product of one-dimensional mass matrix $\mathbb{M}\in\mathbb{R}^n$ and 
+the stiffness matrix $\mathbb{C}\in\mathbb{R}^n$, i.e., $\mathbb{A}^0 = \mathbb{M}\otimes\mathbb{I} + 
 2\mathbb{C}\otimes\mathbb{C} + \mathbb{I}\otimes\mathbb{M}$. We note that the
 condition number of matrix $\mathbb{A}^0$ grows exponentially with $n$.
 
 %sines
-To enforce simply supported boundary conditions onto solution of (\ref{eq:bar}) 
+To enforce simply supported boundary conditions onto the solutions of (\ref{eq:bar}) 
 we consider test spaces constructed from functions $E_k=\sqrt{\tfrac{2}{\pi}}\sin{kx}$,
-which are eigenfunctions of the eigenvalue problem for one dimensional biharmonic 
+which are eigenfunctions of the eigenvalue problem for the one-dimensional biharmonic 
 operator
 \[
   \begin{aligned}
   \deriv{^4 u}{s^4} = \lambda u\text{ in }\mathcal{I},\\
-  u = \deriv{^2 u}{s^2} = 0\text{ on }\partial\mathcal{I}
+  u = \deriv{^2 u}{s^2} = 0\text{ on }\partial\mathcal{I},
   \end{aligned}
 \]
 with the interval $\mathcal{I}=\left[0, \pi\right]$. The corresponding
 eigenvalues are $\lambda_k=k^4$. In complete analogy to the spaces spanned by
 functions due to Shen, the basis of the $n$-dimensional space $\Vh^r, r>0$ over
-$\mathcal{I}$ is formed by first $n$ eigenfunctions $E_k$. The basis of the
+$\mathcal{I}$ is formed by the first $n$ eigenfunctions $E_k$. The basis of the
 space $\Vh^0$ defined over $\Omega=\mathcal{I}\times\mathcal{I}$ are then formed
-as tensor products. Attractive property of the eigenfunctions $E_k$ is the fact
+as tensor products. An attractive property of the eigenfunctions $E_k$ is the fact
 that all the matrices $\mathbb{A}^r$, $\mathbb{M}^r$ are diagonal. Indeed we
 have $\mathbb{M}^r=\mathbb{I}$, while $\mathbb{A}^r\in\mathbb{R}^{n \times n},
 r>0$ takes the form $\mathbb{A}^r=\text{diag}\left(\lambda_k, k=1, 2, \cdots
-n\right)$. Finally the two dimensional bending matrix is defined as $\mathbb{A}^0_{ij}=
-\Lambda_{ij}\delta_{ij}$ with the diagonal values $\Lambda_{ij}= i^4 + 2 i^2 j^2 + j^4$.
+n\right)$. Finally the two-dimensional bending matrix is defined as $\mathbb{A}^0_{ij}=
+\Lambda_{ij}\delta_{ij}$ (no summation implied) with the diagonal values $\Lambda_{ij}= i^4 + 2 i^2 j^2 + j^4$.
 It is clear that the condition number of the matrix grows as $n^4$. 
 
 %comparison
-We shall now compare the convergence properties of the two basis on a simple one
-dimensional biharmonic problem
+We shall now compare the convergence properties of the two basis on a simple 
+one-dimensional biharmonic problem
 \begin{equation}
   \label{eq:test}
   \deriv{^4u}{s^4} = f\text{ in }\left(-1, 1 \right)\quad\text{ with }f(x)=\begin{cases}
@@ -369,8 +368,8 @@ dimensional biharmonic problem
     \end{cases},
   \end{equation}
 which can be viewed as a building block of the complex-plate beam system (\ref{eq:foo}).
-We remark that the Shen basis solves the problem (\ref{eq:test}) with clamped
-boundary conditions, while for the basis of eigenfunction simply supported
+We remark that the Shen basis solves problem (\ref{eq:test}) with clamped
+boundary conditions, while for the basis of eigenfunctions simply supported
 boundary conditions are used. The problem is considered with four different right 
 hand sides $f_i$. It can be seen that each function $f_i$ is determined by two functions, $g, h$. This
 property is symbolically denoted as $f_i=\left(g, h\right)$. With this
@@ -382,7 +381,7 @@ solution $u$ of (\ref{eq:test}) is then four degrees higher than the given
 right-hand side. As such, in all but the last case, fixed convergence is to be
 expected from the Galerkin method with Shen basis functions. In the last case
 the method should converge exponentially. These expectations are confirmed by
-the results shown in Table \ref{tab:shen_convergence}. On the other hand simple error
+the results shown in Table \ref{tab:shen_convergence}. On the other hand, a simple error
 estimate for the Galerkin method with eigenfunctions $E_k$ shows that the $L^2$
 norm of the error is bounded as $\norm{e}_0\leq\tfrac{\norm{f}_0}{n^4}$. The
 error of the solution should therefore decrease no slower than quadratically.
@@ -595,7 +594,6 @@ growth is due the growth of the largest eigenvalues of the systems}
 \section{Conclusions}
 \label{sec:end}
 fff
-%%%%%%
 % FIXME references
 % FIXME typos
 % FIXME consistency
