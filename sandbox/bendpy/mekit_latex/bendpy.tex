@@ -76,7 +76,8 @@ the equilibrium state is found as the solution of a constrained minimization pro
   u = \min_{v\in V} \mathcal{E}\left(v\right)\quad\text{ and }\quad u_0\circ F_r
   = u_r, r=1, 2, \cdots k,
 \end{equation}
-where the energy functional $\mathcal{E}$ is defined as
+where the energy functional $\mathcal{E}$ is defined for $u=\left(u_0, u_1,
+\cdots, u_k\right)$ as
 \[
   \mathcal{E}\left(u\right)=
     \frac{E_0}{2}\displaystyle\int_{\Omega}\Delta u_0\,\Delta u_0+
@@ -413,8 +414,12 @@ order is greater then four.}
 
   The results presented thus far have validated the Galerkin method with basis
   of Shen functions and eigenfunctions as viable methods to solve the biharmonic
-  equations. Interpreting these are subproblems in the system (\ref{eq:bar}) the
-  methods are suitable also to tackle the complex plate-beam system.
+  equations. Interpreting these as subproblems in the system (\ref{eq:bar}) we
+  claim that the methods are suitable also to tackle the complex plate-beam system.
+  At the time of writing we are unable to provide a support for this claim in
+  the form of a convergence study. However Figure \ref{fig:solutions} shows that
+  the solutions obtained by the method are physical and the constrains remain
+  well respected.
 
 \begin{table}[t!]
     \begin{center}
@@ -449,30 +454,91 @@ $n$  &  $f_0: \norm{e}_0$  & $f_1: \norm{e}_0$ & $f_2: \norm{e}_0$ & $f_3: \norm
   \end{center}
   \end{table}
 
-\section{HOW SHOULD WE CALL THIS}
-\label{sec:lbb}
-
-
-
  \begin{figure}[ht]
  \centering
  \includegraphics[width=0.45\textwidth]{img/shen_u0}
  \includegraphics[width=0.45\textwidth]{img/sine_u0}\\
  \includegraphics[width=0.45\textwidth]{img/shen_u0_ur}
  \includegraphics[width=0.45\textwidth]{img/sine_u0_ur}\\
- \caption{xxx
+ %\caption
+ \caption{
+  Solution of the plate-beam system obtained by the Galerkin method with Shen
+  functions (left) and eigen functions (right) for $n=15$. In the top row the vertical
+  displacement $u_0$ of the plate is plotted. The position of beams is indicated
+  by black lines. Further the index of the beam is shown in magenta. In the
+  bottom row the difference in the plate's displacement on the beams and the
+  beams' displacement is shown. The error of constrains is less than $10^{-4}$.
  }
- \label{fig:conds}
+ \label{fig:solutions}
  \end{figure}
- %
- %
+
+\section{Condition numbers of plate-beam systems and preconditioning}
+\label{sec:lbb}
+In this section we briefly discuss a phenomena which is bound to occur in any
+discretization of plate-beam system, namely, the condition number of linear system 
+grows with the size of the linear system (see e.g.
+\cite{benzi}). This growth is due to the saddle point nature of the continuous
+problem (\ref{eq:system}) but it can be greatly accelerated by the choice of the
+discretization. To illustrate this issue Figure \ref{fig:no_precon} shows the condition 
+number of linear systems obtained by discretizing (\ref{eq:system}) with the
+Galerkin method with Shen polynomials and the eigenfunctions. The condition
+number of the system due to Shen basis reaches $10^{16}$ very rapidly ($n=15$). For 
+same degree the condition number of the eigenfunction system is about ten orders of 
+magnitude smaller. We note that $n=15$ is a modest degree and to achieve
+sufficient accuracy of the solution, spaces with larger dimensions might be
+needed. However with larger spaces the linear systems quickly become stiff and
+the obtained solution might suffer from round-off errors. This problem can be
+avoided by solving a preconditioned problem. Here we shall hint on a part of the
+suitable preconditioner. Note that for simplicity we set $E_r=1$ for all $r$.
+
+Investigating the spectra of linear systems in Figure \ref{fig:no_precon} it is
+clear that the growth of the condition number is mainly due to the fact that the
+smallest eigenvalue of the system decreases with the size of the linear system.
+Using results of \cite{marie} that build on the work of \cite{malkus}, the
+smallest eigenvalue defines the discrete Brezzi inf-sup constant $\beta$, which
+determines stability of the discretization. In \cite{marie} stability of the
+finite element disretization of the Stokes(saddle point) system is investigated using
+the eigenvalue problem for the Schur complement
+\begin{equation}
+  \label{eq:schur}
+  \Bmat^{\text{T}}\Amat^{-1}\Bmat\Pvec = \beta\mathbb{N}\Pvec,
+\end{equation}
+where $\mathbb{N}$ is a symmetric positive definite matrix which
+represent discretization of the norm of the continuous space $Q$. The matrix is
+\textit{a priori} known and the discretization is found stable if the smallest 
+of eigenvalues $\beta$ is bounded regardless of the size of the linear system. Here
+we shall reverse the process: the matrix $\mathbb{N}$ is to be found from the
+requirement that the smallest eigenvalue remains bounded. It can be shown that
+such a matrix can be found by the following algorithm. Let $\mathbb{M},
+\mathbb{A}$ the mass matrix and the matrix of the biharmonic operator on $\Qh$.
+Then
+$\mathbb{N}=\left(\mathbb{M}\mathbb{V}\right){\Lambda}^{-1}\left(\mathbb{M}\mathbb{V}\right)^{\text{T}}$,
+where $\mathbb{V}$, $\Lambda$  solve the generalized eigenvalue problem
+$\mathbb{A}\mathbb{V}=\mathbb{M}\mathbb{V}\Lambda$. We note that with the basis
+of eigenfunctions we have $\mathbb{V}=\mathbb{I}$ and $\Lambda=\mathbb{A}$. The
+smallest eigenvalue of the problem (\ref{eq:schur}) with the constructed matrix
+$\mathbb{N}$ is shown in Figure \ref{fig:schur}. The eigenvalue remains constant
+for all values of discretization parameter $n$.
  \begin{figure}[ht]
  \centering
  \includegraphics[width=0.45\textwidth]{img/shen_cond}
  \includegraphics[width=0.45\textwidth]{img/sine_cond}\\
  \includegraphics[width=0.45\textwidth]{img/shen_spectrum}
  \includegraphics[width=0.45\textwidth]{img/sine_spectrum}\\
- \caption{}
+ \caption{Condition number and spectra of linear systems stemming from
+ discretization of the plate-beam system (\ref{eq:bar}) by Shen polynomials
+ (left) and eigenfunctions (right) for different degrees $n$. Two beam arrangements 
+ are considered. Subscripts one corresponds to a single vertical beam
+ $\left[0, -1\right]-\left[0, 1\right]$. Arrangement where a horizontal beam 
+$\left[-1, 0\right]-\left[1, 0\right]$ is added is denoted by subscript two.
+For both discretizations the condition numbers grows roughly as
+$\kappa\propto\exp{n^{1/\alpha}}$, where $\alpha$ for the Shen basis is much
+larger than for the eigenfunctions. The presence of the second beam has little to
+no effect on the rate. In the bottom row the dependence of the smallest and largest
+eigenvalues $\lambda_{min}, \lambda_{max}$ of the system on the degree is shown. 
+The largest eigenvalues are stable, while the smallest ones go zero and are this 
+the cause of the growth of the condition number $\kappa$.
+ }
  \label{fig:no_precon}
  \end{figure}
  
@@ -480,28 +546,56 @@ $n$  &  $f_0: \norm{e}_0$  & $f_1: \norm{e}_0$ & $f_2: \norm{e}_0$ & $f_3: \norm
  \centering
  \includegraphics[width=0.45\textwidth]{img/Schur_precond_shen_cond}
  \includegraphics[width=0.45\textwidth]{img/Schur_precond_sine_cond}\\
- \caption{}
+ \caption{Smallest eigenvalues of the problem (\ref{eq:schur}) with constructed
+ matrix $\mathbb{N}$. On the left the system was discretized with function due
+ to Shen. Result of the system discretized with eigenfunctions are shown on the
+ right. The smallest eigenvalue $\beta_1, \beta_2$ for the system with one and
+ two beams remain constant for all $n$.}
  \label{fig:Schur}
  \end{figure}
- 
+Based on our findings and the theory of abstract preconditioner reviewed in
+\cite{kent} a possible preconditioner for the plate-beam system is a block
+diagonal matrix
+\[
+    \begin{bmatrix}
+      \mathbb{A}^{-1} & 0 \\
+      0 & \mathbb{N}^{-1}
+    \end{bmatrix}.
+\]
+The effect of the proposed preconditioner is shown in Figure \ref{eq:precond}.
+The preconditioner has stabilized the smallest eigenvalues but at the same time 
+linear growth has been introduced to the largest eigenvalues. This growth translates 
+into a linear increase of the condition number of the system. This is certainly an 
+improvement over the unpreconditionerd case. However the ideal preconditioner
+would yield stable condition numbers.
+
  \begin{figure}[ht]
  \centering
- \includegraphics[width=0.45\textwidth]{img/precond_shen_cond}
- \includegraphics[width=0.45\textwidth]{img/precond_sine_cond}\\
- \includegraphics[width=0.45\textwidth]{img/precond_shen_spectrum}
- \includegraphics[width=0.45\textwidth]{img/precond_sine_spectrum}\\
- \caption{}
+ \includegraphics[width=0.45\textwidth]{img/Precond_shen_cond}
+ \includegraphics[width=0.45\textwidth]{img/Precond_sine_cond}\\
+ \includegraphics[width=0.45\textwidth]{img/prec_shen_spectrum}
+ \includegraphics[width=0.45\textwidth]{img/prec_sine_spectrum}\\
+ \caption{
+ Condition number and spectra of the preconditioned linear systems stemming from
+ discretization of the plate-beam system (\ref{eq:bar}) by Shen polynomials
+ (left) and eigenfunctions (right) for different degrees $n$. Two beam arrangements 
+ are considered. Subscripts one corresponds to a single vertical beam
+ $\left[0, -1\right]-\left[0, 1\right]$. Arrangement where a horizontal beam 
+$\left[-1, 0\right]-\left[1, 0\right]$ is added is denoted by subscript two.
+For both discretizations the condition numbers grows linearly with $n$. The
+growth is due the growth of the largest eigenvalues of the systems}
  \label{fig:precond}
  \end{figure}
 
 
-
-\section{Conclusions and extensions}
+\section{Conclusions}
 \label{sec:end}
+fff
+%%%%%%
 % FIXME references
 % FIXME typos
 % FIXME consistency
-%
+%%%%%%
 
 \newpage
 \begin{thebibliography}{99}
@@ -574,528 +668,4 @@ $n$  &  $f_0: \norm{e}_0$  & $f_1: \norm{e}_0$ & $f_2: \norm{e}_0$ & $f_3: \norm
   % }
 
 \end{thebibliography}
-
-
-
-
-
-\end{document}
-=======
-\documentclass{marine_2015}
-     
-\usepackage{graphicx}
-\usepackage{amsmath}
-\usepackage{amsfonts}
-\usepackage{amssymb}
-
-\newcommand{\Amat}{\ensuremath{\mathbb{A}}}
-\newcommand{\Bmat}{\ensuremath{\mathbb{B}}}
-\newcommand{\bvec}{\ensuremath{\mathbf{b}}}
-\newcommand{\uvec}{\ensuremath{\mathbf{u}}}
-\newcommand{\RM}{\ensuremath{RM}}
-\newcommand{\inner}[2]{\ensuremath{\left(#1, #2\right)}}
-\newcommand{\tuple}[2]{\ensuremath{\left[#1, #2\right]}}
-
-\newcommand{\ainner}[2]{\ensuremath{a\left(#1, #2\right)}}
-\newcommand{\binner}[2]{\ensuremath{b\left(#1, #2\right)}}
-\newcommand{\Linner}[1]{\ensuremath{L\left(#1\right)}}
-\newcommand{\Vh}{\ensuremath{V_{\mathbf{n}}}}
-\newcommand{\Qh}{\ensuremath{Q_{\mathbf{m}}}}
-
-\newcommand{\norm}[1]{\ensuremath{\left\|#1\right\|}}
-\newcommand{\vvec}[1]{\ensuremath{\pmb{#1}}}
-\newcommand{\deriv}[2]{\ensuremath{\frac{\mathrm{d}#1}{\mathrm{d}#2}}}
-\newcommand{\tderiv}[2]{\ensuremath{\tfrac{\mathrm{d}#1}{\mathrm{d}#2}}}
-\newcommand{\mm}[1]{({\bf mm comment:} \emph{#1})}
-
-\title{
-  BEND$\left|\text{P}\right|$Y: PYTHON FRAMEWORK FOR COMPUTING BENDING OF COMPLEX PLATE-BEAM SYSTEMS
-}
-
-\author{MIKAEL MORTENSEN$^{1, 2}$ AND MIROSLAV KUCHTA$^{1}$ AND KENT-ANDRE MARDAL$^{1, 2}$ }
-
-\heading{Mikael Mortensen, Miroslav Kuchta and Kent-Andre Mardal}
-
-\address{$^{1}$
-Department of Mathematics, Division of Mechanics, University of Oslo,\\
-0316 Oslo, Norway
-  \and
-$^{2}$ 
-Center for Biomedical Computing, Simula Research Laboratory,\\
-P.O. Box 134, No-134 Lysaker, Norway
-}
-
-\keywords{biharmonic equation, Lagrange multipliers, Schur complement}
-
-\abstract{
-We present a light-weight Python module for computing small deformations of a 
-single plate supported by an arbitrary number of possibly intersecting
-stiffeners. We show how the problem fits into the framework of abstract 
-saddle point problems and how this abstraction can be exploited for clean design 
-of the code. Stability properties of the resulting linear systems for two different 
-sets of basis functions, namely, the eigenfunctions of the biharmonic operator 
-and specialized Legendre polynomials are discussed. 
-}
-
-\begin{document}
-
-\section{Introduction}
-% What are we solving?
-In this paper we discuss Galerkin methods for finding the equilibrium state of a 
-physical system formed by a loaded thin plate and several beams that are constrained 
-to deform together with the plate. Denoting $k$ the number of supporting beams, 
-the equilibrium state is found as the solution of a constrained minimization problem
-\begin{equation}
-  \label{eq:foo}
-  u = \min_{v\in V} \mathcal{E}\left(v\right)\quad\text{ and }\quad u_0\circ F_r
-  = u_r, r=1, 2, \cdots k,
-\end{equation}
-where the energy functional $\mathcal{E}$ is defined as
-\[
-  \mathcal{E}\left(u\right)=
-    \frac{E_0}{2}\displaystyle\int_{\Omega}\Delta u_0\,\Delta u_0+
-    \sum_{r=1}^k\frac{E_r}{2}\int_{\mathcal{I}}
-  \deriv{^2u_r}{s^2}\deriv{^2u_r}{s^2}J_r^{-3}
-  -\displaystyle\int_{\Omega}f u_0.
-\]
-Here $V=V_0\times V_1 \times\cdots\times V_k$ is a function space with $k+1$
-components. The first component $V_0$ contains functions that map the plate
-domain $\Omega$ to real numbers and is therefore the space where the plate's
-vertical displacement $u_0$ is found. The remaining components in $V$ contain the 
-vertical displacements of individual beams $u_r$, i.e., the scalar 
-functions whose domain is the interval $\mathcal{I}$. Moreover each beam is
-considered as a set $\Gamma_r=\left\{x\in\Omega, x=F_r\left(s\right), s\in\mathcal{I}\right\}$
-defined by an invertible mapping $F_r$ with Jacobian $J_r$. Note that for straight 
-beams the Jacobian is simply the length of
-the beam divided by the length of the interval. The mapping $F_r$ is also 
-required to satisfy the conditions $F_r\left(s_0\right), F_r\left(s_1\right)\in\partial\Omega$ 
-for $s_0, s_1$ the endpoints of $\mathcal{I}$. No beam is thus allowed to end inside 
-the plate. Finally $f$ denotes the load while $E_0, E_r, r=1,2,\cdots k$ are 
-constant parameters which, following the Kirchhoff-Love and Euler-Bernoulli
-hypothesis (see, e.g., \cite{reddy}), depend on the material and geometry.
-
-Introducing $k$ Lagrange multipliers $\lambda_k\in Q_k$, where the functions in 
-$Q_k$ map the interval $\mathcal{I}$ to scalars, the constrained problem 
-(\ref{eq:foo}) can be equivalently written as a search for extrema of the Lagrangian
-$\mathcal{L}$,
-\begin{equation}
-  \label{eq:bar}
-\mathcal{L}\left(u, \lambda\right) = \mathcal{E}\left(u\right) +
-  \sum_{r=1}^k\int_{\mathcal{I}}\left(u_0\cdot F_r - u_r\right)\lambda_r J_r.
-\end{equation}
-The space $Q$ and function $\lambda\in Q$ are defined analogically as in (\ref{eq:foo}).
-We note that the unconstrained problem (\ref{eq:bar}) is solvable only for
-suitable pair of spaces $V, Q$ for which the requirements of the
-Babu\v{s}ka-Brezzi\cite{babuska, brezzi} theory are satisfied.
-
-% It can be solved with FEM but simple geometry ... global functions, spectral
-% Galerkin
-For a complex domain $\Omega$ the finite element method is arguably the most 
-suitable method to solve the problem (\ref{eq:bar}). If, on the other hand, the
-domain is simple, the Galerkin method with globally supported basis functions
-can be applied. Note that the finite element method is an instance of the Galerkin 
-method with test spaces spanned by the functions with local support. Regardless
-of the basis functions employed, the stable discretization of (\ref{eq:bar})
-requires that the Babu\v{s}ka-Brezzi conditions be satisfied by the constructed
-finite dimensional spaces. We remark that in addition to stability
-considerations the finite element discretization of the problem is also complicated
-by the presence of the biharmonic operator, which requires techniques for fourth order 
-problems (see e.g. \cite{brenner}). The approximations of $V$ must be constructed 
-from $C^1$ continuous elements, e.g. Argyris element \cite{argyris}, or non-conforming 
-elements, e.g. Morley element\cite{morley}. Alternatively, discontinuous elements with 
-suitable stabilization \cite{brenner_ip} can be used. 
-
-Here we shall consider the plate as a simply connected rectangular domain and as
-such focus on Galerkin methods with test functions having global support.
-Further, the two selected basis are designed for the fourth order problems and thus 
-only the Babu\v{s}ka-Brezzi theory needs to be considered to derive a stable
-discretization of problem (\ref{eq:bar}). The methods are discussed within a
-framework for abstract saddle point problems reviewed in Section
-\ref{sec:abstract}. The framework serves to identify the few common
-elements(matrices) that are required to easily introduce Galerkin discretizations of
-(\ref{eq:bar}) based on any set of basis functions. Properties of the two sets of
-basis functions considered in this paper are then compared in Section \ref{sec:basis}.
-Finally in Section \ref{sec:lbb} the inf-sup condition for the two proposed
-disretizations is discussed.
-
-\section{Abstract framework for saddle point problems}
-\label{sec:abstract}
-% conditions for extrema
-The necessary conditions for the extreme point of the Lagrangian $\mathcal{L}$
-from (\ref{eq:bar}) define $2k+1$ equations to be satisfied by the $2k+1$
-unknowns $\left(u, \lambda\right)\in V\times Q$. These equations read
-\[
-  \begin{aligned}
-    \label{eq:system}
-    E_0\displaystyle\int_{\Omega}\Delta u_0\,\Delta v_0-
-    \sum_{r=1}^k\int_{\mathcal{I}}v_0\lambda_r J_r &=\displaystyle\int_{\Omega}f
-    v_0\quad\forall v_0\in V_0,& \\
-    E_r\displaystyle\int_{\mathcal{I}}
-    \deriv{^2u_r}{s^2}\deriv{^2v_r}{s^2}J_r^{-3} +
-  \int_{\mathcal{I}} u_r \lambda_r J_r &= 0\quad\forall v_r\in V_r, r=1,
-    2\cdots, k,&\\
-  \int_{\mathcal{I}}\left(u_r-u_0\right)\mu_r J_r &= 0\quad\forall \mu_r\in Q_r,
-    r=1, 2\cdots, k&.\\
-  \end{aligned}
-\]
-To apply the Babu\v{s}ka-Brezzi theory of abstract saddle point problems to (\ref{eq:system})
-the system is rewritten in terms of bilinear forms $a:V\times V\mapsto \mathbb{R}$, $b:Q\times V\mapsto \mathbb{R}$
-and a linear form $L:V\mapsto R$. Here 
-$\ainner{u}{v}=\sum_{r=0}^{k}\ainner{u_r}{v_r}_r$ where \mm{Missing text}
-
-
-
-
-% how the problem fits saddle
-% Galerkin and how A, B are formed for r. The elements that are needed for
-% efficiency: mass, stiffness, bending, (fast inner product). Probably mention sparsity
-% Eigenvalue problem for LBB.
-
-
-
-
-
-Let $\mathcal{I}$ denote a nonempty interval. As we are in the following
-interested in domains that have a Cartesian product structure we consider without
-loss of generality $\Omega=\mathcal{I}\times\mathcal{I}$. We shall refer to this
-domain as \textit{plate}. Further let $w_i, i=1, 2,\cdots, k$ be a set of curves 
-$w_i=\left\{\vec{x}\in\Omega, \vec{x}=\vec{F}_i\left(s\right),
-s\in\mathcal{I}\right\}$, where $\vec{F_i}$ is a smooth invertible mapping with
-Jacobian $J_i>0$ that additionally satisfies $\vec{F}_i\left(s_0\right),
-\vec{F}_i\left(s_1\right)\in\partial\Omega$ and
-$\vec{F}_i\left(s_0\right) \neq \vec{F}_i\left(s_1\right)$ for $s_0, s_1$ the
-endpoints of interval $\mathcal{I}$. These curves, and occasionally the
-respected mappings are referred to as \textit{beams}. In this paper we are for the
-most part concerned with straight/linear beams, that is, we consider mappings
-$\vec{F}_i\left(s\right)=\vec{P}_i\tfrac{s_1-s}{s_1-s_0}+\vec{Q}_i\tfrac{s_0-s}{s_0-s_1}$
-determined by pairs of mutually distinct points $\vec{P}_i, \vec{Q}_i$ that
-are located on the boundary of the plate. \mm{Use that over which when the added sentence puts a restriction on the objects it refers to. E.g. dogs that are pink, not dogs which are pink.} Note that in this case
-$J_i=\tfrac{\left|\vec{P}_i-\vec{Q}_i\right|}{2}$. 
-% you do linear so absorb jacobian into material!!! KISS
-%
-%
-%
-With these assumptions on geometry we let $V, \hat{V}_i, i=1, 2, \cdots, k$ denote
-spaces of functions that map respectively the plate and the beams to real
-numbers. By invertibility of $\vec{F}_i$ each function space $\hat{V}_i$ can be
-associated with a function space $V_{i}$ that maps the reference interval
-$\mathcal{I}$ to real numbers. Indeed for $v\in V_i$ function
-$\hat{v}=v\circ\vec{F}_i$ belongs to $\hat{V}_i$.
-
-Let $u\in V, u_i\in V_i, i=1, 2, \cdots, k$ and consider the problem of
-minimizing the Lagrangian
-\[
-  \mathcal{L}\left(u, u_1, u_2, \cdots, u_k\right)=
-  \frac{E}{2}\displaystyle\int_{\Omega}\Delta u\,\Delta u+
-  \sum_i\frac{E_i}{2}\int_{\mathcal{I}}
-  \deriv{^2u_i}{s^2}\deriv{^2u_i}{s^2}J_i^{-3}
-  -\displaystyle\int_{\Omega}f u
-\]
-subjected to $k$ constraints
-$T(u)=u_i$, here $T(u)$ is a short hand for the composition of trace and the
-pullback inverse.\textit{explain the constraint, trace, Sobolev?}.
-We build the constraint into the Lagrangian. To this end consider spaces $Q_i$
-and functions (Lagrange multipliers) $\lambda_i\in Q_i$. Moreover let
-$Q=Q_0\times Q_1\times\cdots\times Q_k$ and $\vvec{\lambda}\in
-Q,\vvec{\lambda}_i=\lambda_i$ \mm{???} and a problem
-\[
-  \mathcal{L}\left(u, u_1, u_2, \cdots, u_k;\vvec{\lambda}\right)=
-   \frac{E}{2}\displaystyle\int_{\Omega}\Delta u\,\Delta u+
-  \sum_i\frac{E_i}{2}\int_{\mathcal{I}}
-  \deriv{^2u_i}{s^2}\deriv{^2u_i}{s^2}J_i^{-3}
-  -\displaystyle\int_{\Omega}f u - \sum_i\int_{\mathcal{I}}\left(u-u_i\right)\lambda_i J_i
-\]
-The necessary condition for extrema are then
-Under additional regularity we can make Euler Lagrange equations \mm{rewrite}
-\[
-  \begin{aligned}
-    E\Delta^2u &= f\quad\text{ in }\Omega\\
-    E_i\deriv{^4 u_i}{s^4} &= 0\quad\text{ on }\mathcal{I}\\
-    u &= u_i\quad\text{ on }\mathcal{I}\\
-  \end{aligned}
-\]
-subjected to boundary conditions $u=0, \partial_nu=0$ and $u_i=0, \tderiv{u_i}{s}=0$
-$u=0, \Delta u=0$ and $u_i=0, \tderiv{^2u_i}{s^2}=0$. \textit{What are these called?}
-Abstract saddle $V:=V\times V_1, \times V_2, \cdots, \times V_k$,
-$V\ni\vvec{u}=\left(u, u_1, u_2, \cdots, u_k\right)$ and define bilinear form
-$a:V\times V\mapsto\mathbb{R}$ as \mm{missing $v$ below:}
-\[
-  \ainner{\vvec{u}}{\vvec{v}} = 
-  E\displaystyle\int_{\Omega}\Delta u\,\Delta+
-  \sum_iE_i\displaystyle\int_{\mathcal{I}} \deriv{^2u_i}{s^2}\deriv{^2v_i}{s^2}J_i^3
-\]
-$b:V\times Q\mapsto\mathbb{R}$ as
-\[
-  \binner{\vvec{v}}{\vvec{\lambda}} = 
-  \int_{\mathcal{I}}\left(v_i-v\right)\lambda_i J_i
-\]
-Finally linear form
-$L:V\mapsto\mathbb{R}$ as
-\[
-  \displaystyle\int_{\Omega}f v
-\]
-%FIXME it is much better to use V_0 and then V...
-% Saddle
-Then the problem becomes simply: Find $\vvec{u}\in V, \vvec{\lambda}\in Q$ such
-that $\ainner{u}{v}+\binner{v}{\lambda}+\binner{u}{\mu}=\Linner{v}$ for all 
-$\vvec{v}\in V, \vvec{\mu}\in Q$. You have babuska theory that gives you
-continuous existence. Don't go there... Discrete mention Stokes taylor hood, or
-the compatibility condition from spectral.
-% Galerkin
-The finite dimensional approximation of $V$ is $\Vh$. Here $\mathbf{n}$ is a
-multiindex of length $k+1$ and $\mathbf{n}_i, i=0, 1,\cdots, k$ denotes dimension
-of the $i$-th component of $\Vh$ which is spanned by functions $\phi^i_j,
-i=1,2,\cdots\mathbf{n}_i$. Note that $\phi^0_j$ are defined over $\Omega$ while
-the rest have the reference interval as their domain. Similarly, we denote $\Qh$ 
-the finite dimensional approximation of $Q$ is . Here $\mathbf{m}$ is a multiindex
-of length $k$ and $\mathbf{m}_i, i=1, 2, \cdots, k$ denotes dimension of the 
-$i$-th component of $\Qh$ spanned by functions $\psi^i_j, j=1,
-2\cdots,\mathbf{m}_i$.
-% Matrices
-Let $n, m$ be respectively the sizes of multiindices $\mathbf{n}, \mathbf{m}$.
-The abstract saddle point problem considered on the discerete subspaces
-translates into the linear system: Find $\mathbf{U}\in\mathbb{R}^n,
-\mathbf{P}\in\mathbb{R}^m$ such that
-\[
-    \begin{bmatrix}
-      \mathbb{A} & \mathbb{B} \\
-      \mathbb{B}^{\text{T}} & 0
-    \end{bmatrix}
-    \,
-    \begin{bmatrix}
-      \mathbf{U} \\
-      \mathbf{P}
-    \end{bmatrix}
-    =
-    \begin{bmatrix}
-      \mathbf{b}\\
-      0
-    \end{bmatrix}.
-\]
-$\mathbf{b}\in\mathbb{R}^n$ has most entries zero except the first $\mathbf{n}_0$
-entries which take the value $\inner{\phi^0_j}{f}$. The matrix
-$\Amat\in\mathbb{R}^{n\times n}$ is block diagonal consisting of $k+1$
-submatrices
-\[
-    \mathbb{A}=
-    \begin{bmatrix}
-      \mathbb{A}^0  &   &  &\\
-                    & \mathbb{A}^1 &  &\\
-                    &   &   \ddots    & \\
-                    &   &   & \mathbb{A}^k\\
-    \end{bmatrix}
-\]
-with $\mathbb{A}^0_{i, j}=E\inner{\Delta \phi^0_i}{\Delta\phi^0_j}$ and
-$\mathbb{A}^r_{i, j}=E_r\displaystyle\int_{\mathcal{I}}
-\deriv{^2\phi^r_i}{s^2}\deriv{^2\phi^r_j}{s^2}J_r^3$. Matrix
-$\Bmat\in\mathbb{R}^{n\times m}$
-\[
-    \mathbb{B}=
-    \begin{bmatrix}
-      \mathbb{C}^1 & \mathbb{C}^2 & \cdots & \cdots & \mathbb{C}^k\\
-      \mathbb{M}^1   &        0       & \cdots & \cdots &        0      \\
-           0         & \mathbb{M}^2   &    0   & \cdots &   \vdots      \\
-         \vdots      &       0        & \ddots & \ddots &   \vdots      \\
-         \vdots      &     \vdots      & \ddots & \ddots &       0      \\
-      0         &  \cdots        & \cdots & 0      &   \mathbb{M}^k     \\
-    \end{bmatrix}
-\]
-where $\mathbb{C}^r_{ij}=\int_{\mathcal{I}}\phi^0_j\psi^r_i$ and
-$\mathbb{M}^r_{ij}=\int_{\mathcal{I}}\phi^r_j\psi^r_i$, so the latter defines
-a mass matrix between spaces.
-Eigenvalue problems for wellposedness/stability. Programming needs assembler
-so just take into accont the multiindex to get the position and size of the
-block. What are blocks: we have mass matrix and the 1d 2d bending matrices.
-Simplifies if $\phi^i=\psi^i$.
-
-% Discussion on properties of basis. Some speedup with FFT
-\section{Basis}
-\label{sec:basis}
-% For each basis how it is defined. How does A look, convergence properties for
-% biharmonic problem(What happens if discontinuity). How does A scale. Comment
-% on fast assembly
-\subsection{Shen basis}
-Described in shen. Legendre polynomials - we use for clamped boundary
-conditions. Confirm spectral convergence in 1d and 2d. In 1d the biharmonic is
-diagonal hence Ak matrices. But A0 is ... . Mass matrix is penta diagonal. How
-does 2d bending matrix scale. Probably mention the tensor product. Mention
-forward legendre transform.
-\subsection{Eigen basis}
-Consider eigenvalue problem. Find functions - spectral decomposition. Action of
-Galerkin method with the basis. Convergence 1d, 2d. Matrices. Solution. If you
-have time it would be really nice to solve 1d solution with rhs that has
-different smoothness so that we see how it effects the rate in both cases.
-
-\section{Eigenvalues}
-\label{sec:lbb}
-When the basis are explained. We show kappa of both matrices as matrix
-increases-preconditioner is needed for it locks (1beam 2 beams). The story has
-to be that we are looking for the preconditioner but not find it yet. We focus
-on the smallest eigenvalue of Schur. Simple configuration, ... . Maybe we can
-do two beams and see how lmin effects. I think it is best to be honest. If we
-try A, the cond increases for lmax, also we are not robust with respect to
-material and beam position ... So this should be future work.
-
-\section{Showcase}
-Will not have rates but we can show same domain multiple beans different bcs. If
-the nonlinearity is included.... If the precond works at least in one case solve
-the problem iteratively.
-% Preconditioning, uzawa, block lu
-
-\section{Conclusions and extensions}
-\label{sec:end}
-Combine different families of functions...
-
-
-
-
-
-
-
-
-Here we shall consider 
-the plate as a simply connected rectangular domain
-
-
-spanned 
-either by the basis functions presented in \cite{shen} or 
-
-
-Here we shall
-consider
-
-
-Here we shall consider domain 
-$\Omega$ 
-% global, sparse, spectral, framework components to solve (1) with only few
-% changes, basis are presented, discuss LBB in both by eigenvalue problems,
-% conclusies and future work
-
-
-%    \sum_{r=1}^k\frac{E_r}{2}\int_{\mathcal{I}}\deriv{^2u_r}{s^2}\deriv{^2u_r}{s^2}J_r^{-3}+
-%    \sum_{r=1}^k\int_{\mathcal{I}}\left(u_0\cdot F_r - u_r\right)\lambda_r J_r
-%  -\displaystyle\int_{\Omega}f u_0.
-%\]
-
-
-
-
-
-
-On the other hand, Galerkin method with test spaces spanned by functions with 
-global support is a natural choice for simply connected rectangular domains $\Omega$.
-
-
-
-We shall in Section \ref{sec:abstract} 
-% Lagrange 
-
-Here we
-shall consider test spaces spanned by the Legendre presented
-based on functions with a global support are a natural choice. 
-
-% For sufficiently smooth solution of (\ref{eq:foo}) the integration by parts yields
-% that $u$ solves the system
-% \begin{equation}
-%   \label{eq:bar}
-%   \begin{aligned}
-%     E_0\Delta^2 u_0 &= f\text{ in }\Omega\\
-%     E_r\deriv{^4 u_r}{s^4} &= 0 \text{ on }\mathcal{I}, r=1, 2,\cdots k\\
-%     u_0 &= u_r \circ F^{-1}_r \text{ on }\Gamma_r
-%   \end{aligned}
-% \end{equation}
-% subjected to the simply-supported boundary conditions
-% \[
-%   u\left(x\right) = \Delta u\left(x\right) = 0\quad x\in\partial\Omega\quad\text{and}\quad
-%   u_r\left(s_i\right) = \deriv{^2 u_r}{s^2}\left(s_i\right)=0\quad i = 0, 1
-% \]
-% or the clamped boundary conditions
-% \[
-%   u\left(x\right) = \frac{\partial u}{\partial n}\left(x\right) = 0\quad x\in\partial\Omega\quad\text{and}\quad
-%   u_r\left(s_i\right) = \deriv{u_r}{s}\left(s_i\right)=0\quad i = 0, 1.
-% \]
-% 
-% With a general domain $\Omega$ the problem (\ref{eq:foo}) is arguably best solved 
-% by splines or the finite element method. For the latter, special techniques are
-% required to handle the fourth order operators in (\ref{eq:bar}). The problem can
-% be discretized with 
-
-Here On the other hand, the plate $\Omega$ is a simple domain
-
-
-Due to biharmonic operator in (\ref{eq:bar}) the problem 
-
-\newpage
-\begin{thebibliography}{99}
-
-\bibitem{reddy} Reddy B.D., \textit{Introductory functional analysis: with applications
-  to boundary value problems and finite elements}, Springer, (1998).
-
-%\bibitem{brezzi} Brezzi F., On the existence, uniqueness and approximation of saddle-point problems arising from Lagrangian multipliers,
-%  \textit{Mathematical Modelling and Numerical Analysis-Mod{\'e}lisation Math{\'e}matique et Analyse Num{\'e}rique},
-%  (1974), 
-%  \textbf{8}: 129--151.
-%
-%\bibitem{brenner} Brenner S.C. and Scott R., \textit{The Mathematical Theory of Finite Element Methods},
-%  Springer, (2008).
-%
-%\bibitem{babuska} Babu\v{s}ka I., The finite element method with Lagrangian
-%  multipliers, \textit{Numerische Mathematik}, (1973), \textbf{20(3)}: 179--192.
-%
-%\bibitem{sympy} {{SymPy Development Team}},
-%  \textit{SymPy: Python library for symbolic mathematics}, (2014),
-%  http://www.sympy.org.
-%
-%\bibitem{shen} Shen, J., Efficient spectral-Galerkin method I. Direct solvers of
-%  second-and fourth-order equations using Legendre polynomials, \textit{SIAM
-%  Journal on Scientific Computing}, (1994), \textbf{15(6)}: 1489--1505.
-%
-  % \bibitem{numpy}
-  %   @Misc{,
-  %   author =    {Eric Jones and Travis Oliphant and Pearu Peterson and others},
-  %   title =     {{SciPy}: Open source scientific tools for {Python}},
-  %   year =      {2001--},
-  %   url = "http://www.scipy.org/",
-  %   note = {[Online; accessed 2015-05-03]}
-  % }
-  % 
-  % \bibitem{cython}
-  % Stefan Behnel, Robert Bradshaw, Craig Citro, Lisandro Dalcin, Dag Sverre Seljebotn and Kurt Smith. Cython: The Best of Both Worlds, Computing in Science and Engineering, 13, 31-39 (2011),
-  % 
-  % 
-  % \bibitem{fenics}
-  %   Logg A., Mardal K.-A., Wells G.N. et al.,
-  %   \textit{Automated Solution of Differential Equations by the Finite Element Method},
-  %   Springer, (2012).
-  % 
-  % \bibitem{swig}
-  %   @inproceedings{Beazley:1996:SEU:1267498.1267513,
-  %  author = {Beazley, David M.},
-  %  title = {SWIG: An Easy to Use Tool for Integrating Scripting Languages with C and C++},
-  %  booktitle = {Proceedings of the 4th Conference on USENIX Tcl/Tk Workshop, 1996 - Volume 4},
-  %  series = {TCLTK'96},
-  %  year = {1996},
-  %  location = {Monterey, California},
-  %  pages = {15--15},
-  %  numpages = {1},
-  %  url = {http://dl.acm.org/citation.cfm?id=1267498.1267513},
-  %  acmid = {1267513},
-  %  publisher = {USENIX Association},
-  %  address = {Berkeley, CA, USA},
-  % } 
-  % 
-  % \bibitem{oasis}
-  % @article{mortensen2015oasis,
-  %   title={Oasis: A high-level/high-performance open source Navier--Stokes solver},
-  %   author={Mortensen, Mikael and Valen-Sendstad, Kristian},
-  %   journal={Computer Physics Communications},
-  %   volume={188},
-  %   pages={177--188},
-  %   year={2015},
-  %   publisher={North-Holland}
-  % }
-
-\end{thebibliography}
-
-
 \end{document}
