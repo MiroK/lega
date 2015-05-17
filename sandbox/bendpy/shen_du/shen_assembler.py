@@ -111,7 +111,7 @@ class ShenSimpleAssembler(CoupledAssembler):
     def preconditioner_blocks(self, s):
         '''H^s norm preconditioners for multipliers.'''
         Hmats = []
-        for m in self.m_vector:
+        for m, E, beam in zip(self.m_vector, self.materials[1:], self.beams):
             if s is None:
                 Hmat = eye(m)
             else:

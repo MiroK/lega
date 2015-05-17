@@ -51,10 +51,16 @@ if __name__ == '__main__':
 
         print 'g', g, '\th', h
         print 'u0', nsimplify(u0), '\tu1', nsimplify(u1)
+        for k in range(0, 8, 2):
+            print k, 'd_k u0', float(u0.diff(x, k).subs(x, -1)), \
+                     '\td_k u1', float(u1.diff(x, k).subs(x, 1))
+
+            print k, 'd_k g', float(g.diff(x, k).subs(x, -1)), \
+                     '\td_k h', float(h.diff(x, k).subs(x, 1))
 
         # Bring to [0, pi] domain
         n = 2
-        while n < 257:
+        while n < 14:
             U = solve_sines(g, h, n)
             uh = sines.sine_function(U)
 

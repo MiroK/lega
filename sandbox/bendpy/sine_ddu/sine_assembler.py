@@ -110,7 +110,7 @@ class SineSimpleAssembler(CoupledAssembler):
     def preconditioner_blocks(self, s):
         '''H^s norm preconditioners for multipliers.'''
         Hmats = []
-        for m in self.m_vector:
+        for (m, E, beam) in zip(self.m_vector, self.materials[1:], self.beams):
             if s is None:
                 Hmat = eye(m)
             else:
@@ -127,6 +127,8 @@ class SineSimpleAssembler(CoupledAssembler):
 
                     Hmat = W.dot(Lmbda.dot(W.T))
                     Hmat = csr_matrix(Hmat)
+
+                print '>>>', beam.Jac, beam.Jac**4
                    
                 # Sines are special
                 diagonal = np.diagonal(sines.bending_matrix(m).toarray())**s
@@ -134,38 +136,3 @@ class SineSimpleAssembler(CoupledAssembler):
 
             Hmats.append(Hmat)
         return Hmats
-
-    def assemble_AApreconditioner_inv(self, s):
-        '''Preconditioner of system [[A, B], [B.T, 0]].'''
-        # Plate preconditioner
-        E = self.materials[0]
-        n = self.n_vector[0]
-        lmbda = np.diagonal(sines.stiffness_matrix(n).toarray())
-        diagonal = np.array([lmbda[i]**2 + 2*lmbda[i]*lmbda[j] + lmbda[j]**2 
-                             for j in range(n) for i in range(n)])
-        diagonal *= E
-        diagonal = diagonal**-1
-        Pmats = [diags(diagonal, 0)]
-
-
-        # Beam preconditioners
-        for n, E in zip(self.n_vector[1:], self.materials[1:]):
-            diagonal = np.diagonal(E*sines.bending_matrix(n).toarray())**(-1)
-            mat = diags(diagonal, 0)
-            Pmats.append(mat)
-
-        # Multiplier preconditioners
-        Hmats = []
-        for m in self.m_vector:
-            if s is None:
-                Hmat = eye(m)
-            else:
-                # Sines are special
-                diagonal = np.diagonal(sines.bending_matrix(m).toarray())**(-s)
-                Hmat = diags(diagonal, 0)
-
-            Hmats.append(Hmat)
-
-        Pmats.extend(Hmats)
-
-        return block_diag(Pmats)
