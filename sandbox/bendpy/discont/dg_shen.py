@@ -16,14 +16,14 @@ from sympy import Symbol, integrate
 import numpy as np
 
 
-def solve_poisson(g, h):
+def solve_poisson(g, h, alpha=1, beta=1):
     '''Solve the Poisson problem with f defined by g, h'''
     x = Symbol('x')
     # Primitive functions of g
-    G = integrate(-g, x)
+    G = integrate(-g/alpha, x)
     GG = integrate(G, x)
     # Primitive functions of h
-    H = integrate(-h, x)
+    H = integrate(-h/beta, x)
     HH = integrate(H, x)
 
     # The solution is GG + a0*x + b0 on [-1, 0] and HH + a1*x + b1 on [0, 1]
@@ -51,8 +51,8 @@ def solve_poisson(g, h):
     u_cont = u0.subs(x, 0) - u1.subs(x, 0)
     du_cont = u0.diff(x, 1).subs(x, 0) - u1.diff(x, 1).subs(x, 0)
     # That it in fact solves the laplacian
-    u0_lap = integrate((u0.diff(x, 2) + g)**2, (x, -1, 0))
-    u1_lap = integrate((u1.diff(x, 2) + h)**2, (x, 0, 1))
+    u0_lap = integrate((alpha*u0.diff(x, 2) + g)**2, (x, -1, 0))
+    u1_lap = integrate((beta*u1.diff(x, 2) + h)**2, (x, 0, 1))
 
     conds = [bcl, bcr, u_cont, du_cont, u0_lap, u1_lap]
     assert all(map(lambda v: abs(v) < 1E-13, conds))
@@ -127,13 +127,13 @@ if __name__ == '__main__':
     from sympy.plotting import plot
 
     x = Symbol('x')
-    g, h = S(1), 1+x
+    g, h = S(1), S(3)
 
     problem = 'poisson'
-    k = 3
+    k = 0
 
     if problem == 'poisson':
-        u0, u1 = solve_poisson(g, h)
+        u0, u1 = solve_poisson(g, h, alpha=1, beta=2)
 
         p0 = plot(u0.diff(x, k), (x, -1, 0), show=False)
         p1 = plot(u1.diff(x, k), (x, 0, 1), show=False)

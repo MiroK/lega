@@ -11,3 +11,6 @@
 *.log
 *.pdf
 
+/sandbox/bendpy/mekit_paper/data
+/sandbox/bendpy/mekit_talk
+
