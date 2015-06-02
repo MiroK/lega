@@ -8,13 +8,13 @@ from itertools import product
 import numpy as np
 
 
-def solve_stokes(m_shen, n_leg, f0, f1, mu=1, as_values=True, with_eigvals=False):
+def solve_stokes(m_shen, n_leg, f0, f1, mu=1, with_eigvals=False):
     '''
     Solve the Stokes problem:
         
-        mu*div(grad(u)) - grad(p) = (f0, f1)
-                           div(u) = 0       in \Omega = [-1, 1]^2
-                                u = 0       on \partial\Omega
+        -mu*div(grad(u)) - grad(p) = (f0, f1)
+                            div(u) = 0       in \Omega = [-1, 1]^2
+                                 u = 0       on \partial\Omega
 
     Use m_shen Shen polynomials >= n_leg Legendre polynomials.
     '''
@@ -58,75 +58,75 @@ def solve_stokes(m_shen, n_leg, f0, f1, mu=1, as_values=True, with_eigvals=False
     U1 = U1.reshape((m_shen, m_shen))
     P = P.reshape((n_leg-1, n_leg-1))
 
-    # Optionally transform coefs to point values. Then return the grid so that
-    # Plotting is possible
-    if not as_values:
-        return U0, U1, P
-    else:
-        # First the Us have to made from Shen polys expansion coefs to Legendre
-        # polys expansion coefs
-        Tmat = shen.legendre_to_shen_matrix(m_shen+2)
-        U0 = Tmat.T.dot(U0.dot(Tmat.toarray()))
-        U1 = Tmat.T.dot(U1.dot(Tmat.toarray()))
-
-        # Not that everyhing has been transformed to Legendre do BLT for point
-        # values
-        blt_V = leg.BackwardLegendreTransformation([m_shen+2, m_shen+2])
-        U0 = blt_V(U0)
-        U1 = blt_V(U1)
-
-        blt_Q = leg.BackwardLegendreTransformation([n_leg, n_leg])
-        # Add the 0 row, col for constants
-        P0 = np.zeros((n_leg, n_leg))
-        P0[1:, 1:] = P
-        P = blt_Q(P0)
-
-        # Finally points
-        points = leggauss(m_shen+2)[0]
-        points = np.array([list(p)
-                           for p in product(points, points)])
-        X = points[:, 0]
-        X = X.reshape((m_shen+2, m_shen+2))
-
-        Y = points[:, 1]
-        Y = Y.reshape((m_shen+2, m_shen+2))
-
-        return {'velocity': {'X': X, 'Y': Y, 'U0': U0, 'U1': U1},
-                'pressure': {'X': X[:n_leg, :n_leg], 'Y': Y[:n_leg, :n_leg], 'P': P}}
+    # Note that these are coefs of series not point values!
+    return U0, U1, P
 
 # -----------------------------------------------------------------------------
 
 if __name__ == '__main__':
-    from sympy import sin, cos, pi, symbols
+    from sympy import sin, cos, pi, symbols, exp
 
     x, y = symbols('x, y')
-    f0 = (x+y)*sin(pi*(x-y))
-    f1 = (x-y)*cos(pi*(x+y))
+    f0 = sin(x+y)
+    f1 = -exp(-x**2 + y**2)
 
-    # Setup analytical solution
+    # FIXME: analytical solution
 
-    # Sample solve on some (coarse) grid
-    res = solve_stokes(m_shen=100, n_leg=98, f0=f0, f1=f1)
+    m_shen, n_leg = 100, 98
+    U0, U1, P = solve_stokes(m_shen=m_shen, n_leg=n_leg, f0=f0, f1=f1)
 
-    # Final plot
-    XV = res['velocity']['X']
-    YV = res['velocity']['Y']
-    U0 = res['velocity']['U0']
-    U1 = res['velocity']['U1']
+    # Transform to points values
+    # First the Us have to made from Shen polys expansion coefs to Legendre
+    # polys expansion coefs
+    Tmat = shen.legendre_to_shen_matrix(m_shen+2)
+    U0 = Tmat.T.dot(U0.dot(Tmat.toarray()))
+    U1 = Tmat.T.dot(U1.dot(Tmat.toarray()))
 
-    XQ = res['pressure']['X']
-    YQ = res['pressure']['Y']
-    P = res['pressure']['P']
+    # Now that everyhing has been transformed to Legendre do BLT for point
+    # values
+    blt_V = leg.BackwardLegendreTransformation([m_shen+2, m_shen+2])
+    U0 = blt_V(U0)
+    U1 = blt_V(U1)
 
+    blt_Q = leg.BackwardLegendreTransformation([n_leg, n_leg])
+    # Add the 0 row, col for constants
+    P0 = np.zeros((n_leg, n_leg))
+    P0[1:, 1:] = P
+    P = blt_Q(P0)
+
+    # Finally points
+    points = leggauss(m_shen+2)[0]
+    points = np.array([list(p)
+                       for p in product(points, points)])
+    X = points[:, 0]
+    X = X.reshape((m_shen+2, m_shen+2))
+
+    Y = points[:, 1]
+    Y = Y.reshape((m_shen+2, m_shen+2))
+
+    # Now plot
     import matplotlib.pyplot as plt
-
     plt.figure()
+    # Velocity
     U = np.sqrt(U0**2 + U1**2)
-    plt.pcolor(XV, YV, U)
-    plt.quiver(XV, YV, U0, U1)
+    c = plt.pcolor(X, Y, U)
+    plt.quiver(X[::3], Y[::3], U0[::3], U1[::3])
+    plt.colorbar(c)
+    plt.xlabel('$x$')
+    plt.ylabel('$y$')
 
     plt.figure()
-    plt.pcolor(XQ, YQ, P)
-    plt.contour(XQ, YQ, P, 9, colors='k')
+    plt.streamplot(Y[::3], X[::3], U0[::3], U1[::3])
+    plt.xlabel('$x$')
+    plt.ylabel('$y$')
 
+    # Pressure
+    X, Y = X[:n_leg, :n_leg], Y[:n_leg, :n_leg]
+    plt.figure()
+    c = plt.pcolor(X, Y, P.T)
+    plt.contour(X, Y, P.T, 9, colors='k')
+    plt.colorbar(c)
+
+    plt.xlabel('$x$')
+    plt.ylabel('$y$')
     plt.show()
