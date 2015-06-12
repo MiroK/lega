@@ -164,4 +164,11 @@ if __name__ == '__main__':
     plt.xlabel('Number of cells $N$')
     plt.ylabel('Seconds to solve $N$ systems of size $N$')
     plt.legend(loc='best')
+
+    plt.figure()
+    plt.plot(data[:, -1], data[:, 0]/data[:, 1])
+    plt.xlabel('Number of cells $N$')
+    plt.ylabel('Classic relative to eigs')
+    plt.legend(loc='best')
+
     plt.show()
