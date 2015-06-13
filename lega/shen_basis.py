@@ -140,8 +140,20 @@ if __name__ == '__main__':
     from sympy import lambdify, sin, pi, integrate, symbols
     from sympy.mpmath import quad
 
+    import matplotlib as mpl
+    mpl.use('MacOSX')
+
+    from sympy.plotting import plot
+    n = 5
+    shen = shen_basis(n)
+    x = Symbol('x')
+    print [f.subs(x, 0) for f in shen]
+    for f in shen:
+        plot(f, (x, -1, 1))
+
+
     test_1d = False
-    test_2d = True
+    test_2d = False
 
     if test_1d:
         # The goal is to get these function from Legendre
