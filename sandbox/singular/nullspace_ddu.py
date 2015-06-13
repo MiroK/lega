@@ -2,7 +2,9 @@ from sympy import Symbol, integrate, S, sqrt
 import lega.legendre_basis as leg
 import scipy.sparse.linalg as sparse_la
 import scipy.linalg as la
-from scipy.sparse import bmat
+from scipy.sparse import bmat, diags
+from pyamg.krylov import minimal_residual as minres
+from pyamg.krylov import gmres
 import numpy as np
 
 # Consider a problem:
@@ -113,7 +115,6 @@ def projection_solver(f, n, projection='L2'):
     # Nullspace vector basis representation
     Z = np.r_[1/m_sqrt(2), np.zeros(n-1)]
     PP = np.eye(n) - np.outer(Z, leg.mass_matrix(n).dot(Z))
-    print PP.dot(A) - A.dot(PP)
     # FIXME: do we have trouble because A and P commute?
 
     if projection == 'l2':
@@ -130,6 +131,61 @@ def projection_solver(f, n, projection='L2'):
 
     return U, lmba
 
+
+def stab_solver(f, n):
+    '''Extra term controlling kernel in L^2.'''
+    A = leg.stiffness_matrix(n).toarray()
+    # Rhs made orthogonal
+    F = leg.ForwardLegendreTransformation(n)(f)
+    F[0] = 0
+    M = leg.mass_matrix(n)
+    b = M.dot(F)
+
+    # Kernel control added
+    B = np.zeros_like(A)
+    B[0, 0] = 1
+    A += B
+
+    U = la.solve(A, b)
+
+    return U, -1
+
+
+def saddle_spectrum(n):
+    # The system is [[A, B], [B.T, 0]], [[b], 0]
+    # with A the stiffness matrix and B has the constaint
+    A = leg.stiffness_matrix(n)
+    # Constaint matrix is simple due to orthogonality
+    B = np.array([np.r_[float(sqrt(2)), np.zeros(n-1)]]).T
+    # System matrix
+    AA = bmat([[A, B], [B.T, None]])
+
+    ZZ = diags(np.r_[1, np.zeros(A.shape[0]-1)], 0)
+    M = leg.mass_matrix(n)
+    P = bmat([[A+M, None], [None, np.array([[2]])]])
+
+    eigvals = la.eigvals(AA.toarray(), P.toarray())
+    return np.sort(eigvals)
+
+
+def saddle_solve(n):
+    A = leg.stiffness_matrix(n)
+    # Constaint matrix is simple due to orthogonality
+    B = np.array([np.r_[float(sqrt(2)), np.zeros(n-1)]]).T
+    # System matrix
+    AA = bmat([[A, B], [B.T, None]])
+
+    bb = np.r_[np.random.rand(A.shape[0]), 0]
+    x0 = np.r_[np.random.rand(A.shape[0]), 0]
+
+    residuals = []
+    x, info = gmres(AA, bb, x0, tol=1E-12, residuals=residuals, maxiter=1000)
+
+    if info == 0:
+        return len(residuals)-1, residuals[-1]
+    else:
+        return -1, None
+
 # -----------------------------------------------------------------------------
 
 if __name__ == '__main__':
@@ -137,44 +193,66 @@ if __name__ == '__main__':
     from sympy.mpmath import quad
     from math import sqrt as m_sqrt
 
-    x = Symbol('x')
-    f = sin(2*pi*x)
-    f, u = get_problem(f=f)
-    n = 4
-    print 'u', simplify(u)
-    print 'f', f
+    if False:
+        x = Symbol('x')
+        f = sin(2*pi*x)
+        f, u = get_problem(f=f)
+        n = 20
+        print 'u', simplify(u)
+        print 'f', f
 
-    # Nullspace vector basis representation
-    Z = np.r_[1/m_sqrt(2), np.zeros(n-1)]
+        # Nullspace vector basis representation
+        Z = np.r_[1/m_sqrt(2), np.zeros(n-1)]
 
-    # Saddle point formulation
-    # U, ah = saddle_point_solver(f, n)
+        # Saddle point formulation
+        # U, ah = saddle_point_solver(f, n)
 
-    # Auto-orthogonal formulation
-    # U, ah = orthogonal_solver(f, n)
+        # Auto-orthogonal formulation
+        # U, ah = orthogonal_solver(f, n)
 
-    # Projection formulation
-    U, ah = projection_solver(f, n)
-   
-    # Extend U properly
-    U = np.r_[0, U] if len(U) == n-1 else U
-    
-    uh = leg.legendre_function(U)
-    # Errors
-    e = u - uh
-    error_H1 = m_sqrt(quad(lambdify(x, e.diff(x, 1)**2), [-1, 1]))
-    error_L2 = m_sqrt(quad(lambdify(x, e**2), [-1, 1]))
-    print 'e_H1=%.4E, e_L2=%.4E' % (error_H1, error_L2)
+        # Projection formulation
+        # U, ah = projection_solver(f, n)
 
-    # Orthogonality
-    zleg = leg.legendre_function(Z)
-    M = leg.mass_matrix(n)
-    print '(z, z) %.4E' % abs(quad(lambdify(x, zleg**2), [-1, 1]))
-    print 'Z.M.Z', Z.dot(M.dot(Z))
-    print '(z, uh)', abs(quad(lambdify(x, uh*zleg), [-1, 1]))
-    print 'U.M.Z', U.dot(M.dot(Z))
-    
-    # Multiplier
-    # Analytic
-    a = float(integrate(z*f, (x, -1, 1)))
-    print 'a=%g, ah=%g, lambda error=%.4E' % (a, ah, abs(a - ah))
+        # Stab formulation
+        U, ah = stab_solver(f, n)
+       
+        # Extend U properly
+        U = np.r_[0, U] if len(U) == n-1 else U
+        
+        uh = leg.legendre_function(U)
+        # Errors
+        e = u - uh
+        error_H1 = m_sqrt(quad(lambdify(x, e.diff(x, 1)**2), [-1, 1]))
+        error_L2 = m_sqrt(quad(lambdify(x, e**2), [-1, 1]))
+        print 'e_H1=%.4E, e_L2=%.4E' % (error_H1, error_L2)
+
+        # Orthogonality
+        zleg = leg.legendre_function(Z)
+        M = leg.mass_matrix(n)
+        print '(z, z) %.4E' % abs(quad(lambdify(x, zleg**2), [-1, 1]))
+        print 'Z.M.Z', Z.dot(M.dot(Z))
+        print '(z, uh)', abs(quad(lambdify(x, uh*zleg), [-1, 1]))
+        print 'U.M.Z', U.dot(M.dot(Z))
+        
+        # Multiplier
+        # Analytic
+        a = float(integrate(z*f, (x, -1, 1)))
+        print 'a=%g, ah=%g, lambda error=%.4E' % (a, ah, abs(a - ah))
+
+    import sys
+    if sys.platform == 'darwin':
+        import matplotlib as mpl
+        mpl.use('MacOSX')
+    import matplotlib.pyplot as plt
+
+    if False:
+        n = 400
+        eigvals = saddle_spectrum(n)
+
+        plt.figure()
+        plt.plot(np.arange(1, len(eigvals)+1), eigvals, 'o')
+        plt.show()
+
+    for n in [8, 16, 32, 64, 128, 256, 512]:
+        iters, e = saddle_solve(n)
+        print n, iters, e
