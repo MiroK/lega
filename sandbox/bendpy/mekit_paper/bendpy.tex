@@ -5,6 +5,7 @@
 \usepackage{amsfonts}
 \usepackage{amssymb}
 \usepackage{floatrow}
+\usepackage{xfrac}
 \floatsetup[table]{capposition=top}
 
 \newcommand{\Amat}{\ensuremath{\mathbb{A}}}
@@ -93,10 +94,11 @@ $F_r:\mathcal{I}\mapsto \Omega$ with Jacobian $J_r$. Note that for straight beam
 which are the main focus of the present work, the Jacobian is simply the length of 
 the beam divided by the length of the interval. In addition we shall for
 simplicity require that the mapping $F_r$ satisfies two additional constraints 
-$F_r\left(s_0\right), F_r\left(s_1\right)\in\partial\Omega$ which ensure that no 
-beam ends inside the plate. The equilibrium state of the physical system formed
-by the plate supported with the beams is found as the solution of a constrained 
-minimization problem
+$F_r\left(s_0\right), F_r\left(s_1\right)\in\partial\Omega$. The endpoints of
+the beam are thus required to lie on the boundary of the plate $\partial\Omega$.
+Equivalently, the additional constraints ensure that no beam ends inside the plate.
+The equilibrium state of the physical system formed by the plate supported with 
+the beams is found as the solution of a constrained minimization problem
 \begin{equation}
   \label{eq:foo}
   u = \min_{v\in V} \mathcal{E}\left(v\right)\quad\text{ and }\quad u_0\circ F_r
@@ -212,11 +214,13 @@ that the bilinear forms $a$ and $b$ are simply
 Finally with the linear form $\Linner{u}=\inner{f}{u_0}$ the problem
 (\ref{eq:system}) is rewritten as an abstract saddle point problem: Find
 $\left(u, \lambda\right)\in V\times Q$ such that
-\begin{equation}
-  \label{eq:abstract_saddle}
+\[
+%\begin{equation}
+  %\label{eq:abstract_saddle}
   \ainner{u}{v} + \binner{\lambda}{v} + \binner{\mu}{u} = \Linner{v}\quad\forall
   \left(v, \mu\right)\in V\times Q.
-\end{equation}
+%\end{equation}
+\]
 
 To apply the Galerkin method to system (\ref{eq:system}) we construct finite dimensional
 subspaces $\Vh\subset V$ and $\Qh\subset Q$ that approximate $V$ and $Q$
@@ -300,9 +304,12 @@ every space $\Qh^r$ there must be a procedure for computing matrix $\mathbb{C}^r
 which can be interpreted as a mass matrix between the restriction of $\Vh^0$ to
 beam with label $r$ and the multiplier space $\Qh^r$. The number of procedures is 
 thus significantly reduced if all the spaces involved in the discrete formulation 
-are spanned by the same functions. A further step to speed up the assembly is a 
-choice of basis functions for which the matrices $\mathbb{M}^r$ and $\mathbb{A}^r$ 
-are sparse and their nonzero values can be tabulated. With such basis functions 
+are spanned by the same functions (e.g. all matrices $\mathbb{A}^r$ can then be
+computed by one routine which takes the size of the required matrix $\mathbf{m}_r$ as an
+argument). Moreover we shall set $\mathbf{m}_r=\mathbf{n}_r, r\in R$
+and thus $\Vh^r=\Qh^r$ and all the matrices $\mathbb{M}^r$ are square. A further 
+step to speed up the assembly is a choice of basis functions for which the matrices 
+$\mathbb{M}^r$ and $\mathbb{A}^r$ are sparse and their nonzero values can be tabulated. With such basis functions 
 computing the matrices $\mathbb{C}^r$ remains the only bottleneck of the assembly 
 process. 
 
@@ -326,8 +333,8 @@ satisfies the system of partial differential equations
 \[
   \begin{aligned}
     E_0\Delta^2u_0 &= f\quad\text{ in }\Omega,\\
-    E_r\deriv{^4 u_r}{s^4} &= 0\quad\text{ on }\mathcal{I}, r\in R\\
-    u_0 \circ F_r&= u_r\quad\text{ on }\mathcal{I}, r\in R\\
+    E_r\deriv{^4 u_r}{s^4} &= 0\quad\text{ on }\mathcal{I}, r\in R,\\
+    u_0 \circ F_r&= u_r\quad\text{ on }\mathcal{I}, r\in R,\\
   \end{aligned}
 \]
 subject to boundary conditions (i) $u_0=0, \partial_n u_0=0$ on $\partial\Omega $ and 
@@ -391,7 +398,7 @@ We shall now compare the convergence properties of the two basis on a simple
 one-dimensional biharmonic problem
 \begin{equation}
   \label{eq:test}
-  \deriv{^4u}{s^4} = f\text{ in }\left(-1, 1 \right)\quad\text{ with }f(x)=\begin{cases}
+  \deriv{^4u}{s^4} = f\text{ in }\omega=\left(-1, 1 \right)\quad\text{ with }f(x)=\begin{cases}
       g(x) & x \leq 0 \\
       h(x) & x > 0 \\
     \end{cases},
@@ -403,54 +410,21 @@ boundary conditions are used. The problem is considered with four different
 manufactured right-hand sides $f_i$. Each function $f_i$ is determined by two 
 functions, $g_i, h_i$. This property is symbolically denoted as $f_i=\left(g_i, h_i\right)$. 
 With this convention, the right hand sides considered are $f_0=\inner{1}{2}$, 
-$f_1=\inner{f}{x+1}$,
-$f_2=\inner{x^2/2 + x/4 + 3/4}{h=-x^2 + x/4 + 3/4}$ and
-$f_3=\inner{\exp{x}\sin{5x}}{\exp{x}\sin{5x}}$. The functions $f_i$ are
-respectively $L^2, H^1, H^2$ and $C^{\infty}$ smooth. The smoothness of the
-solution $u$ of (\ref{eq:test}) is then four degrees higher than the given
-right-hand side. As such, in all but the last case, fixed convergence is to be
-expected from the Galerkin method with Shen basis functions. In the last case
+$f_1=\inner{1}{x+1}$,
+$f_2=\inner{-\sfrac{x^2}{2} + \sfrac{x}{4} + \sfrac{3}{4}}{-x^2 +
+\sfrac{x}{4} + \sfrac{3}{4}}$ and
+$f_3=\inner{\exp{x}\sin{5x}}{\exp{x}\sin{5x}}$. Functions $f_i$ belong
+respectively to spaces $L^2\left(\omega\right), H^1\left(\omega\right), 
+H^2\left(\omega\right)$ and $C^{\infty}\left(\omega\right)$. The smoothness of the
+solution $u$ of (\ref{eq:test}) is then four ``orders'' higher than the given
+right-hand side. As such, in all but the last case, fixed convergence rate is to 
+be expected from the Galerkin method with Shen basis functions. In the last case
 the method should converge exponentially. These expectations are confirmed by
-the results shown in Table \ref{tab:shen_convergence}. On the other hand, a simple error
-estimate for the Galerkin method with eigenfunctions $E_k$ shows that the $L^2$
-norm of the error is bounded as $\norm{e}_0\leq\tfrac{\norm{f}_0}{n^4}$. The
-error of the solution should therefore decrease no slower than quadratically.
-This estimate is confirmed by the results listed in Table
-\ref{tab:sine_convergence}.
-\begin{table}[t!]
-    \begin{center}
-    \begin{tabular}{ccccc}
-\hline
-$n$  &  $f_0: \norm{e}_0$  & $f_1: \norm{e}_0$ & $f_2: \norm{e}_0$ & $f_3: \norm{e}_0$\\
-\hline
-8    & 6.1251E-06(4.11) & 5.7545E-06(4.11) & 2.8982E-08(5.84)& 6.2305E-06(4.49) \\
-16   & 2.9912E-07(4.36) & 2.8123E-07(4.35) & 4.1493E-10(6.13)& 3.0082E-07(4.37) \\
-32   & 1.3929E-08(4.42) & 1.4545E-08(4.27) & 4.8407E-12(6.42)& 1.4161E-08(4.41) \\
-64   & 6.2978E-10(4.47) & 5.9356E-10(4.61) & 5.6482E-14(6.42)& 6.5283E-10(4.44) \\
-128  & 2.5395E-11(4.63) & 2.4049E-11(4.63) & 8.5939E-16(6.04)& 2.7228E-11(4.58) \\
-256  & 1.1403E-12(4.48) & 1.0861E-12(4.47) & 7.0351E-16(0.29)& 1.2692E-12(4.42) \\
-\hline
-\hline
-    \end{tabular}
-    \caption{The error and convergence rate of the Galerkin method with eigenfunctions for
-    problem (\ref{eq:test}) with simply supported boundary conditions.
-  Irrespective of the regularity of the right-hand sides $f_i$ the method
-converges with fixed order. In agreement with the theoretical analysis, the
-order is greater then four.}
-  \label{tab:sine_convergence}
-  \end{center}
-  \end{table}
-
-  The results presented thus far have validated the Galerkin method with basis
-  of Shen functions and eigenfunctions as viable methods to solve the biharmonic
-  equations. Interpreting these as subproblems in the system (\ref{eq:bar}) we
-  claim that the methods are suitable also to tackle the complex plate-beam system.
-  At the time of writing we are unable to provide a support for this claim in
-  the form of a convergence study. However as can be seen in Figure \ref{fig:solutions} 
-  the solutions obtained by the numerical methods are physical. The effect of
-  stiffeners is clearly visible in the displacement of the plate. Moreover the 
-  constrains remain well respected.
-
+the results shown in Table \ref{tab:shen_convergence}. On the other hand, a simple 
+error estimate $\norm{e}_0\leq\tfrac{\norm{f}_0}{n^4}$ for the Galerkin method 
+with eigenfunctions $E_k$ shows that the order of convergence of the method
+should be at least four if the error is to be measured in the $L^2$-norm. This 
+estimate is confirmed by the results listed in Table \ref{tab:sine_convergence}.
 \begin{table}[t!]
     \begin{center}
     \begin{tabular}{ccccc}
@@ -478,9 +452,48 @@ $n$  &  $f_0: \norm{e}_0$  & $f_1: \norm{e}_0$ & $f_2: \norm{e}_0$ & $f_3: \norm
     problem (\ref{eq:test}) with clamped boundary conditions. Fixed order
     convergence for the first three right hand sides and exponential convergence
     for $f_3$ confirm that the convergence rate is determined by the regularity of 
-    the solution.
-    }
+    the solution. Note that for $f_3$ the error is reduced to machine precision
+    for $n=18$. Afterwards the convergence rate of the method suffers from
+    finite arithmetics.}
   \label{tab:shen_convergence}
+  \end{center}
+  \end{table}
+
+  The results presented thus far have validated the Galerkin method with basis
+  of Shen functions and eigenfunctions as viable methods to solve biharmonic
+  equations. Interpreting these as subproblems in the system (\ref{eq:system}) we
+  claim that the methods are suitable also to tackle the constrained plate-beam system.
+  At the time of writing we are unable to provide a support for this claim in
+  the form of a convergence study. However as can be seen in Figure \ref{fig:solutions} 
+  the solutions obtained by the numerical methods are physical. The effect of
+  stiffeners is clearly visible in the displacement of the plate. Moreover the 
+  constraints remain well respected.
+\begin{table}[t!]
+    \begin{center}
+    \begin{tabular}{ccccc}
+\hline
+$n$  &  $f_0: \norm{e}_0$  & $f_1: \norm{e}_0$ & $f_2: \norm{e}_0$ & $f_3: \norm{e}_0$\\
+\hline
+8    & 6.1251E-06(4.11) & 5.7545E-06(4.11) & 2.8982E-08(5.84)& 6.2305E-06(4.49) \\
+16   & 2.9912E-07(4.36) & 2.8123E-07(4.35) & 4.1493E-10(6.13)& 3.0082E-07(4.37) \\
+32   & 1.3929E-08(4.42) & 1.4545E-08(4.27) & 4.8407E-12(6.42)& 1.4161E-08(4.41) \\
+64   & 6.2978E-10(4.47) & 5.9356E-10(4.61) & 5.6482E-14(6.42)& 6.5283E-10(4.44) \\
+128  & 2.5395E-11(4.63) & 2.4049E-11(4.63) & 8.5939E-16(6.04)& 2.7228E-11(4.58) \\
+256  & 1.1403E-12(4.48) & 1.0861E-12(4.47) & 7.0351E-16(0.29)& 1.2692E-12(4.42) \\
+\hline
+\hline
+    \end{tabular}
+    \caption{The error and convergence rate of the Galerkin method with eigenfunctions for
+    problem (\ref{eq:test}) with simply supported boundary conditions.
+Irrespective of the regularity of the right-hand sides $f_i$ the method
+converges with fixed order. In agreement with the theoretical analysis, the
+order is greater then four. Note that for the right-hand side $f_2$ the observed 
+convergence rate is six. This is due to the fact that the corresponding solution 
+has second derivatives equal to zero on the boundary (cf. functions $E_k$). Also 
+note that the error for $n=128$ is of the size of the machine precision and in
+finite arithmetics cannot be reduced further. Hence for $n=256$ the rate is no
+longer six.}
+  \label{tab:sine_convergence}
   \end{center}
   \end{table}
 
@@ -496,7 +509,7 @@ $n$  &  $f_0: \norm{e}_0$  & $f_1: \norm{e}_0$ & $f_2: \norm{e}_0$ & $f_3: \norm
   functions (left) and eigen functions (right) for $n=15$. In the top row the vertical
   displacement $u_0$ of the plate is plotted. The position of beams is indicated
   by black lines. Further the index of the beam is shown in magenta. In the
-  bottom row the difference in the plate's displacement on the beams and the
+  bottom row the difference between the plate's displacement on the beams and the
   beams' displacement is shown. The error of constrains is less than $10^{-4}$.
  }
  \label{fig:solutions}
@@ -509,12 +522,16 @@ discretization of plate-beam system, namely, the condition number of linear syst
 grows with the size of the linear system (see e.g.
 \cite{benzi}). This growth is due to the saddle point nature of the continuous
 problem (\ref{eq:system}) but it can be greatly accelerated by the choice of the
-discretization. To illustrate this issue Figure \ref{fig:no_precon} shows the condition 
-number of linear systems obtained by discretizing (\ref{eq:system}) with the
-Galerkin method with Shen polynomials and the eigenfunctions. The condition
-number of the system due to Shen basis reaches $10^{16}$ very rapidly ($n=15$). For 
-same degree the condition number of the eigenfunction system is about ten orders of 
-magnitude smaller. We note that $n=15$ is a modest degree and to achieve
+discretization. To illustrate this issue let $\mathcal{A}_S$ be the symmetric
+indefinite matrix in system (\ref{eq:sysAB}) obtained from discretization of
+problem (\ref{eq:system}) by the Shen polynomials. Analogically, let
+$\mathcal{A}_E$ be the matrix obtained by discretizing the problem with
+eigenfunctions(odd trigonometric polynomials). Figure \ref{fig:no_precon} shows the 
+spectral condition number $\kappa$ of both matrices $\mathcal{A}_S, \mathcal{A}_E$ 
+as the function of the polynomials degree. The condition number of the matrix
+$\mathcal{A}_S$ reaches the value of $\kappa=10^{15}$ very rapidly ($n=15$). For
+the same degree the condition number of the eigenfunction system is about ten 
+orders of magnitude smaller. We note that $n=15$ is a modest degree and to achieve
 sufficient accuracy of the solution, spaces with larger dimensions might be
 needed. However with larger spaces the linear systems quickly become stiff and
 the obtained solution might suffer from round-off errors. This problem can be
@@ -526,52 +543,61 @@ suitable preconditioner. Note that for simplicity we set $E_r=1$ for all $r$.
  \includegraphics[width=0.45\textwidth]{img/sine_cond}\\
  \includegraphics[width=0.45\textwidth]{img/shen_spectrum}
  \includegraphics[width=0.45\textwidth]{img/sine_spectrum}\\
- \caption{Condition number and spectra of linear systems stemming from
- discretization of the plate-beam system (\ref{eq:bar}) by Shen polynomials
- (left) and eigenfunctions (right) for different degrees $n$. Two beam arrangements 
- are considered. Subscripts one corresponds to a single vertical beam
- $\left[0, -1\right]-\left[0, 1\right]$. Arrangement where a horizontal beam 
-$\left[-1, 0\right]-\left[1, 0\right]$ is added is denoted by subscript two.
-For both discretizations the condition numbers grows roughly as
-$\kappa\propto\exp{n^{1/\alpha}}$, where $\alpha$ for the Shen basis is much
-larger than for the eigenfunctions. The presence of the second beam has little to
-no effect on the rate. In the bottom row the dependence of the smallest and largest
-eigenvalues $\lambda_{min}, \lambda_{max}$ of the system on the degree is shown. 
-The largest eigenvalues are stable, while the smallest ones go zero and are this 
-the cause of the growth of the condition number $\kappa$.
- }
+ \caption{Condition number $\kappa$ and spectra of linear systems $\mathcal{A}_S,
+ \mathcal{A}_E$ stemming from discretization of the plate-beam system
+ (\ref{eq:system})
+ by Shen polynomials (left) and eigenfunctions (right) for different polynomial 
+ degrees $n$. Two beam arrangements are considered. Subscripts one corresponds 
+ to a single vertical beam $\left[0, -1\right]-\left[0, 1\right]$. Arrangement 
+ where additional horizontal beam $\left[-1, 0\right]-\left[1, 0\right]$ is added 
+ is denoted by subscript two. For both discretizations the condition numbers
+ increases and the rate is significantly larger for the Shen basis. Presence 
+ of the second beam has little to no effect on the rate. In the bottom row the 
+ dependence of the smallest and largest eigenvalues $\lambda_{min}, \lambda_{max}$ 
+ of matrixes $\mathcal{A}_S, \mathcal{A}_E$ on the degree $n$ is shown.
+ The largest eigenvalues are stable, while the smallest ones approach zero and are
+ thus the cause of the growth of the condition number $\kappa$. Consistent with
+ the faster growth in the condition number of $\mathcal{A}_S$ its smallest
+ eigenvalue decreases more rapidly than the smallest eigenvalue of
+ $\mathcal{A}_E$. Note that both scales use logarithmic vertical axis.}
  \label{fig:no_precon}
  \end{figure}
 
-Investigating the spectra of linear systems in Figure \ref{fig:no_precon} it is
-clear that the growth of the condition number is mainly due to the fact that the
-smallest eigenvalue of the system decreases with the size of the linear system.
-Using results of \cite{marie} that build on the work of \cite{malkus}, the
-smallest eigenvalue defines the discrete Brezzi inf-sup constant $\beta$, which
-determines stability of the discretization. In \cite{marie} stability of the
-finite element discretization of the Stokes(saddle point) system is investigated using
-the eigenvalue problem for the Schur complement
+Investigating the spectra of matrices $\mathcal{A}_S, \mathcal{A}_E$ in Figure 
+\ref{fig:no_precon} it is clear that the growth of the condition number is mainly 
+due to the fact that the smallest eigenvalue of the system decreases with the size of the linear
+system/polynomial degree $n$. Using results of \cite{marie} that build on the work 
+of \cite{malkus}, the smallest eigenvalue defines the discrete Brezzi inf-sup 
+constant $\beta$, which determines stability of the discretization. In \cite{marie} 
+stability of the finite element discretization of the Stokes(saddle point) system 
+is investigated using the eigenvalue problem for the Schur complement
 \begin{equation}
   \label{eq:schur}
   \Bmat^{\text{T}}\Amat^{-1}\Bmat\Pvec = \beta\mathbb{N}\Pvec,
 \end{equation}
 where $\mathbb{N}$ is a symmetric positive definite matrix which
-represent discretization of the norm of the continuous space $Q$. The matrix is
-\textit{a priori} known and the discretization is found stable if the smallest 
-of eigenvalues $\beta$ is bounded regardless of the size of the linear system. Here
-we shall reverse the process: the matrix $\mathbb{N}$ is to be found from the
-requirement that the smallest eigenvalue remains bounded. It can be shown that
-such a matrix can be found by the following algorithm. Let $\mathbb{M},
+represents discretization of the norm on the continuous space $Q$. The matrix is
+\textit{a priori} known and the discretization is found stable if there exists a
+universal lower bound on the smallest of eigenvalues $\beta$. That is, stable
+discretization requires that the smallest eigenvalues $\beta$ are bounded from
+below by a constant independent of the size of the linear system/polynomial
+degree. Here we shall reverse the process: the matrix $\mathbb{N}$ is to be found 
+from the requirement that the smallest eigenvalue remains bounded. It can be 
+shown that such a matrix can be found by the following algorithm. Let $\mathbb{M},
 \mathbb{A}$ the mass matrix and the matrix of the biharmonic operator on $\Qh$.
 Then
 $\mathbb{N}=\left(\mathbb{M}\mathbb{V}\right){\Lambda}^{-1}\left(\mathbb{M}\mathbb{V}\right)^{\text{T}}$,
-where $\mathbb{V}$, $\Lambda$  solve the generalized eigenvalue problem
-$\mathbb{A}\mathbb{V}=\mathbb{M}\mathbb{V}\Lambda$. We note that with the basis
-of eigenfunctions we have $\mathbb{V}=\mathbb{I}$ and $\Lambda=\mathbb{A}$. The
-smallest eigenvalue of the problem (\ref{eq:schur}) with the constructed matrix
-$\mathbb{N}$ is shown in Figure \ref{fig:schur}. The eigenvalue remains constant
-for all values of discretization parameter $n$.
- 
+where $\mathbb{V}$, $\Lambda$ solve the generalized eigenvalue problem
+$\mathbb{A}\mathbb{V}=\mathbb{M}\mathbb{V}\Lambda$. Note that the negative power 
+of the diagonal eigenvalue matrix $\Lambda$ suggests that the continuous spaces 
+for the Lagrange multipliers will be Sobolev spaces with negative index.
+Also note that with the basis of eigenfunctions we have $\mathbb{M}=\mathbb{V}=\mathbb{I}$
+and $\Lambda=\mathbb{A}$. Thus there is no need to solve the generalized
+eigenvalue problem. 
+
+The smallest eigenvalue of the problem (\ref{eq:schur}) 
+with the constructed matrix $\mathbb{N}$ is shown in Figure \ref{fig:schur}. 
+The eigenvalue remains constant for all values of discretization parameter $n$.
  \begin{figure}[h!]
  \centering
  \includegraphics[width=0.45\textwidth]{img/Schur_precond_shen_cond}
@@ -580,50 +606,62 @@ for all values of discretization parameter $n$.
  matrix $\mathbb{N}$. On the left the system was discretized with function due
  to Shen. Result of the system discretized with eigenfunctions are shown on the
  right. The smallest eigenvalue $\beta_1, \beta_2$ for the system with one and
- two beams remain constant for all $n$.}
+ two beams remain constant for all polynomial degrees $n$.}
  \label{fig:schur}
  \end{figure}
-Based on our findings and the theory of abstract preconditioner reviewed in
-\cite{kent} a possible preconditioner for the plate-beam system is a block
-diagonal matrix
-\[
+
+Based on our findings and the theory of operator preconditioners reviewed in
+\cite{kent} or the note of Murphy et al. \cite{golub} a possible preconditioner 
+for the plate-beam (\ref{eq:sysAB}) system is a block diagonal matrix
+\begin{equation}
+\label{eq:prec}
+\mathcal{P} = 
     \begin{bmatrix}
       \mathbb{A}^{-1} & 0 \\
       0 & \mathbb{N}^{-1}
     \end{bmatrix}.
-\]
-We note that the preconditioner is especially cheap to compute for the
-discretization with eigenfunctions. In fact it is then a diagonal matrix with
-tabulated values.
+\end{equation}
+Here $\mathbb{A}, \mathbb{N}$ are generic matrices from the system
+(\ref{eq:system}) and the suggested algorithm that approximates the Schur
+complement (\ref{eq:schur}). We shall denote $\mathcal{P}_S, \mathcal{P}_E$ the 
+preconditioners obtained from (\ref{eq:prec}) by substituting respectively the 
+matrices obtained from discretizations by Shen polynomials and eigenfunctions.
+Note that the preconditioner $\mathcal{P}_S$ is very cheap to compute. In fact it 
+is a diagonal matrix with tabulated values.
 
-The effect of the proposed preconditioner is shown in Figure \ref{fig:precond}.
-The preconditioner has stabilized the smallest eigenvalues but at the same time 
-linear growth has been introduced to the largest eigenvalues. This growth translates 
-into a linear increase of the condition number of the system. This is certainly an 
-improvement over the unpreconditionerd case. However the ideal preconditioner
-would yield stable condition numbers. Moreover the preconditioner has to be
-robust with respect to the material/geometry properties $E_r$ as well as the
-beams arrangement. This aspect of the proposed preconditioner has not been
+The effect of the proposed preconditioner is shown in Figure \ref{fig:precond},
+which shows the spectral condition number and the smallest and largest
+eigenvalues of the preconditioned system $\mathcal{P}_S\mathcal{A}_S$ and 
+$\mathcal{P}_E\mathcal{A}_E$. The preconditionesr have stabilized the smallest 
+eigenvalues but at the same time linear growth has been introduced to the largest 
+eigenvalues. The growth translates into a linear increase of the condition number 
+of the systems. This is certainly an improvement over the case without the
+preconditioner. However the ideal preconditioner would yield stable condition 
+numbers. Moreover the preconditioner has to be robust with respect to the 
+material/geometry properties $E_0, E_r, r\in R$ as well as the arrangement of
+the beam. This aspect of the preconditioner (\ref{eq:prec}) has not been 
 investigated here.
-
- \begin{figure}[t]
+ \begin{figure}[t!]
  \centering
  \includegraphics[width=0.45\textwidth]{img/Precond_shen_cond}
  \includegraphics[width=0.45\textwidth]{img/Precond_sine_cond}\\
  \includegraphics[width=0.45\textwidth]{img/prec_shen_spectrum}
  \includegraphics[width=0.45\textwidth]{img/prec_sine_spectrum}\\
  \caption{
- Condition number and spectra of the preconditioned linear systems stemming from
- discretization of the plate-beam system (\ref{eq:bar}) by Shen polynomials
- (left) and eigenfunctions (right) for different degrees $n$. Two beam arrangements 
- are considered. Subscripts one corresponds to a single vertical beam
+ Condition number $\kappa$ and spectra of the preconditioned linear systems 
+ $\mathcal{P}_S\mathcal{A}_S$ and $\mathcal{P}_E\mathcal{A}_E$
+ stemming from discretization of the plate-beam system (\ref{eq:system}) and
+ specializing (\ref{eq:prec}) by Shen polynomials (left) and eigenfunctions (right) 
+ for different degrees $n$.
+ Two beam arrangements are considered. Subscripts one corresponds to a single vertical beam
  $\left[0, -1\right]-\left[0, 1\right]$. Arrangement where a horizontal beam 
-$\left[-1, 0\right]-\left[1, 0\right]$ is added is denoted by subscript two.
-For both discretizations the condition numbers grows linearly with $n$. The
-growth is due the growth of the largest eigenvalues of the systems}
+ $\left[-1, 0\right]-\left[1, 0\right]$ is added is denoted by subscript two.
+ For both discretizations the condition numbers grows linearly with $n$. The growth 
+ is due the growth of the largest eigenvalues of the systems. Presence of the
+ second beam seems to have negligible effect on the condition number.
+ }
  \label{fig:precond}
  \end{figure}
-
 
 \section{Conclusions}
 \label{sec:end}
@@ -631,13 +669,12 @@ In this paper we have discussed generic mathematical abstractions that lead to e
 implementation of Galerkin methods for the constrained optimization problem
 describing the coupled deformation of a thin plate supported by an arbitrary arrangement 
 of support beams. Two specific sets of basis functions based on linear combinations of 
-Legendre polynomials have been described. Both methods have been implemented in a python package 
+Legendre polynomials and eigenfunctions of the one-dimensional biharmonic
+operator have been described. Both methods have been implemented in a python package 
 $\text{Bend}\!\left|\text{P}\right|\!\text{y}$ which was used to explore efficient 
 preconditioners for the resulting linear system. Some elements of the efficient
 preconditioner have been identified. A complete robust preconditioner is currently
 being pursued and is the topic of future work.
-%precond
-%future
 
 %\bibliography{bendpy.bib}
 \newpage
@@ -727,6 +764,11 @@ Shen J.,
 van~der Walt S., Colbert S.C. and Varoquaux G.,
 \newblock The NumPy array: A structure for efficient numerical computation,
 \newblock {\em Computing in Science \& Engineering}, 13(2):22--30, 2011.
+
+\bibitem{golub}
+Murphy M.F., Golub G.H. and Wathen A.J.,
+\newblock A note on preconditioning for indefinite linear systems,
+\newblock {\em SIAM J. Sci. Comput.}, 21(6):1969-1972, 1999.
 
 \end{thebibliography}
 \end{document}

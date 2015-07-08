@@ -127,7 +127,7 @@ if __name__ == '__main__':
     from sympy.plotting import plot
 
     x = Symbol('x')
-    g, h = S(1), S(3)
+    g, h = S(1), S(2)
 
     problem = 'poisson'
     k = 0
