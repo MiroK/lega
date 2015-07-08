@@ -16,8 +16,10 @@ def solve_shen(g, h, n):
 
     # The f is zero on -1, 0 so the integration is a bit spacial...
     x = Symbol('x')
-    b = np.array([quad(lambdify(x, g*v), [-1, 0]) for v in shen.shen_cb_basis(n)])
-    b += np.array([quad(lambdify(x, h*v), [0, 1]) for v in shen.shen_cb_basis(n)])
+    b = np.array([float(quad(lambdify(x, g*v), [-1, 0]))
+                  for v in shen.shen_cb_basis(n)])
+    b += np.array([float(quad(lambdify(x, h*v), [0, 1]))
+                   for v in shen.shen_cb_basis(n)])
 
     # The system is (A + k*M)*U = bb
     U = la.spsolve(A, b)
