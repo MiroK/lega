@@ -1,0 +1,44 @@
+RESPONSE TO REVIEW #1
+
+We would like to thank the reviewer for useful comments. They have been
+addressed in the revised text together with the comments from the second
+reviewer. Changes suggested by the first reviewer are highlighted in the 
+marked text by the red color and commented on briefly in the text below. 
+Apart from the modifications proposed by the reviewers we have also fixed 
+several typos and changed wording in a few places to improve readability 
+of the text. Finally the incorrect strong formulation at the beginning of
+Section 3 has been removed.
+
+1. Rewrite the introduction
+-------------------------------------------------------------------------------
+We have rewritten the introduction such that most symbols are now explained
+prior to being used in the equation (1).
+
+2. Wrong definition on the form b. Needs $b_r$
+-------------------------------------------------------------------------------
+We have rewritten the introduction such that most symbols are now explained
+The definition (now on top of page 4) has been fixed.
+
+3. Growth of the condition number of the saddle point system due to
+discretization: "..., however the condition number of linear systems arising 
+from partial differential equation depend on the basis used.'''
+-------------------------------------------------------------------------------
+We agree with the reviewer that the choice of basis has an effect on the growth of
+the condition number. This is illustrated in our results where in Figure 2 the
+condition number for the system discretized with polynomials of degree 25 is
+10^15 while system of the same size due to eigenfunctions has the condition
+number 10^5. Moreover there is a sentence in the Section 4 which states that 
+''This growth is due to the saddle point nature of the continuous problem 
+(3) but it can be greatly accelerated by the choice of the discretization.'' We
+believe this statement is correct and does not contradict the statement of the
+reviewer.
+
+4. Preconditioner in relation to continuous inf-sup condition
+-------------------------------------------------------------------------------
+We now mention that the negative power of the eigenvalue matrix used to
+construct the N matrix for the Schur complement suggests that the multiplier
+should be sought in Sobolev spaces with negative indices.
+
+5. Inconsistent style in the references
+-------------------------------------------------------------------------------
+The citation style is now consistent.

@@ -1,0 +1,32 @@
+RESPONSE TO REVIEW #2
+
+We would like to thank the reviewer for useful comments. They have been
+addressed in the revised text together with the comments from the first
+reviewer. Changes suggested by the reviewer are highlighted in the 
+marked text by the red color and commented on briefly in the text below. 
+Apart from the modifications proposed by the reviewers we have also fixed 
+several typos and changed wording in a few places to improve readability 
+of the text. Finally the incorrect strong formulation at the beginning of
+Section 3 has been removed.
+
+1. Definition of $\partial\Omega$
+-------------------------------------------------------------------------------
+Symbol $\partial\Omega$ which was missing an explanation is now explained in the
+rewritten introduction leading to equation (1). Rewriting the introduction for
+clarity was suggested by the first reviewer.
+
+2. Use test function $v_r$ instead on the trial function $u_r$ in the saddle
+problem definition.
+-------------------------------------------------------------------------------
+We now use the correct test function in equation (3).
+
+3. Comment on those rates in the convergence tables that do not match statements
+in the text
+-------------------------------------------------------------------------------
+The caption of convergence tables 1 and 2 newly features comments on the
+''loss'' of the convergence rates. For both basis this issue due to finite
+precision arithmetics.
+
+4. Inconsistent references
+-------------------------------------------------------------------------------
+The style in references is now consistent.
