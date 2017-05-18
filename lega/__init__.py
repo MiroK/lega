@@ -1,2 +1,2 @@
-import legendre_basis
-import shen_basis
+from . import legendre_basis
+from . import shen_basis

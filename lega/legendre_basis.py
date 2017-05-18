@@ -3,7 +3,7 @@ from numpy.polynomial.legendre import leggauss, legval
 from sympy import legendre, symbols, Expr, lambdify, Symbol, Number
 from scipy.sparse import diags
 from itertools import product
-from common import function, tensor_product
+from .common import function, tensor_product
 import numpy as np
 
 
@@ -14,7 +14,7 @@ def legendre_basis(N, symbol='x'):
 
 def legendre_function(F):
     '''
-    A linear combination of F_i and the legendre basis functions. If F is a 
+    A linear combination of F_i and the legendre basis functions. If F is a
     vector the result is a function of F. For F matrix the output is a function
     of x, y.
     '''
@@ -58,9 +58,9 @@ def backward_transformation_matrix(N):
     '''
     Compute NxN matrix with values N_ij = L_i(x_j) where L_i are N Legendre
     polynomials and x_j are N GL quadrature points. This matrix is used for
-    backward Legendre transformation: Suppose function f is represented in 
+    backward Legendre transformation: Suppose function f is represented in
     the wave number space by a vector F and let BL be the backward transformation
-    matrix. Then f(x_j) = F.BL[:, j] or f = F.BL or BL.T.F, and vector f 
+    matrix. Then f(x_j) = F.BL[:, j] or f = F.BL or BL.T.F, and vector f
     represents f in the real space.
     '''
     BL = np.zeros((N, N))
@@ -115,13 +115,13 @@ def forward_transformation_matrix(N):
     thus a polynomial of degree N-1. The reasoning behind the definition is that
     is f were a polynomial of degre N-1 the integrals (f, L_i) having an integrand
     of max degree 2N-2 would be exactly evaluated by the N-1 point GL gradrature.
-    Vector F is a representation of function f in the wave number space. 
+    Vector F is a representation of function f in the wave number space.
     Computing F can be represented as matrix-vector product and is reffered to
     as a forward Legendre transformation. Here we get the
     matrix for the operatation FL.
     '''
     # Note that each row of FL could be computed by taking a dot of row of
-    # matrix BL.inv(M) with the vector of weight. 
+    # matrix BL.inv(M) with the vector of weight.
     FL = np.zeros((N, N))
     # Get point and weights of the guadrature
     points, weights = leggauss(N)
@@ -136,7 +136,7 @@ def forward_transformation_matrix(N):
         row /= 2/(2*i+1)
 
         FL[i, :] = row
-   
+
     return FL
 
 
@@ -156,7 +156,7 @@ class GLNodeEvaluation(object):
         assert self.dim < 3
         self.shape = tuple(N)
         # Get points for components
-        points_i = [leggauss(n)[0] for n in N] 
+        points_i = [leggauss(n)[0] for n in N]
         # Combine as cartesian product
         self.points = np.array([list(pis) for pis in product(*points_i)])
 
@@ -166,7 +166,7 @@ class GLNodeEvaluation(object):
         # Sympy functions are lambdified for fast numpy evaluation
         dim = self.dim
         points = self.points
-        
+
         xyz = symbols('x, y, z')
         # Constant functions
         if isinstance(f, (Number, int, float)):
@@ -282,7 +282,7 @@ if __name__ == '__main__':
         # improves
         f = sin(x)*cos(pi*x**2)
         f_ = lambdify(x, f, 'numpy')
-        
+
         tol = 1E-13
         converged = False
         N = 1
@@ -300,14 +300,14 @@ if __name__ == '__main__':
             # Evaluare the L2 error by mpmath.quad which is adaptive and almost
             # exact
             error = sqrt(quad(lambdify(x, e**2), [-1, 1]))
-            
+
             # We compute the L2 error by the mass matrix taking f in the same space
             # as F_ so this is not exact, but it's interesting, right? :)
             e_ = F - F_[:N]
             M = mass_matrix(N)
             error_ = sqrt(e_.dot(M.dot(e_)))
-            
-            print 'N=%d L2=%.4E (mass)L2=%.4E' % (N, error, error_)
+
+            print('N={:%d} L2={:%.4E} (mass)L2={:%.4E}'.format(N, error, error_))
             Ns.append(N)
             errors.append(error)
 
@@ -366,7 +366,7 @@ if __name__ == '__main__':
         # improves
         f = sin(x)*cos(2*pi*y)
         f_ = lambdify([x, y], f, 'numpy')
-        
+
         tol = 1E-13
         converged = False
         N = 2
@@ -379,16 +379,17 @@ if __name__ == '__main__':
         Ns, errors = [], []
         while not converged:
             F = ForwardLegendreTransformation([N, N])(f_)
-            
+
             # We compute the L2 error by the mass matrix taking f in the same space
             # as F_ so this is not exact
             E = F - F_[:N, :N]
             M = mass_matrix(N)
-            
+
             error = sqrt(np.trace((M.dot(E)).dot(M.dot(E.T))))
             # Alternatively and equivalently
             # error = sqrt(((M.dot(E))*(M.dot(E.T)).T).sum())
-            print 'N=%d (mass)L2=%.4E' % (N, error)
+            print("N={:%d} (mass)L2={:%.4E}".format(N, error))
+
             Ns.append(N)
             errors.append(error)
 

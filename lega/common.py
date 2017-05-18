@@ -3,6 +3,7 @@ from itertools import product
 from operator import mul
 from sympy import Symbol, Matrix
 import time
+import functools
 
 
 def function(basis, coefs):
@@ -19,7 +20,7 @@ def tensor_product(basis_i):
     Combine [basis_i[i] for i in range(len(basis_i))] is combined as a tensor
     product. Note that the functions in basis_i[0] rotate the slowest.
     '''
-    return [reduce(mul, vs) for vs in product(*basis_i)]
+    return [functools.reduce(mul, vs) for vs in product(*basis_i)]
 
 
 def reference_mapping(domain, symbol=('x', 'y', 'z', 't')):
@@ -73,7 +74,7 @@ def timeit(f):
         result = f(*args, **kw)
         te = time.time()
 
-        print RED % ('\t%r took: %2.4f sec' % (f.__name__, te-ts))
+        print(RED + '\t{%r} took: {%2.4f} sec'.format(f.__name__, te-ts))
         return result
 
     return timed
@@ -97,7 +98,7 @@ if __name__ == '__main__':
     y = Symbol('y')
     basis_i = [[1, x, x**2], [1, y, y**2, y**3]]
     basis_tp = tensor_product(basis_i)
-    
+
     coefs_tp = np.array([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 1]])
     coefs_tp = coefs_tp.flatten()
 
@@ -109,7 +110,7 @@ if __name__ == '__main__':
     chi, ichi = reference_mapping([[-1, 1]])
     assert chi[0][0] == x and chi[0][1] == 1.0*x
     assert ichi[0][0] == x and ichi[0][1] == 1.0*x
-    
+
     Jmat = jacobian_matrix(chi)
     assert Jmat == Matrix([[1.0]])
     assert abs(Jmat.det() - 1.0) < 1E-15
@@ -118,7 +119,7 @@ if __name__ == '__main__':
     chi, ichi = reference_mapping([[-1, 1], [-1, 1]])
     assert chi[0][0] == x and chi[0][1] == 1.0*x
     assert chi[1][0] == y and chi[1][1] == 1.0*y
-    
+
     Jmat = jacobian_matrix(chi)
     assert Jmat == Matrix([[1.0, 0], [0, 1.0]])
     assert abs(Jmat.det() - 1.0) < 1E-15
@@ -127,7 +128,7 @@ if __name__ == '__main__':
     chi, ichi = reference_mapping([[-1, 1], [-2, 2]])
     assert chi[0][0] == x and chi[0][1] == 1.0*x
     assert chi[1][0] == y and chi[1][1] == 2.0*y
-    
+
     Jmat = jacobian_matrix(chi)
     assert Jmat == Matrix([[1.0, 0], [0, 2.0]])
     assert abs(Jmat.det() - 2.0) < 1E-15

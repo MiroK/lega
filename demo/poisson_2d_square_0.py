@@ -1,6 +1,6 @@
 #
 # Solve -laplace(u) = f in (-1, 1)^2 with T(u) = 0   [1]
-# 
+#
 
 from sympy import symbols, integrate
 from lega.shen_basis import mass_matrix, stiffness_matrix, load_vector
@@ -30,10 +30,10 @@ def solve_poisson_2d(f, n):
     '''Solve the Poisson problem by nxn Shen polynomials.'''
     A = stiffness_matrix(n)
     M = mass_matrix(n)
-    
+
     F = FLT([n+2, n+2])(f)
     b = load_vector(F)      # nxn matrix
-    
+
     # Solve the problem by tensor product solver
     lmbda, V = la.eigh(A.toarray(), M.toarray())
 
@@ -41,9 +41,8 @@ def solve_poisson_2d(f, n):
     bb = (V.T).dot(b.dot(V))
 
     # Apply the inverse in eigen space
-    U_ = np.array([[bb[i, j]/(lmbda[i] + lmbda[j])
-                    for j in range(n)]
-                    for i in range(n)])
+    U_ = bb / (lmbda[:, np.newaxis] + lmbda[np.newaxis, :])
+
     # Map back to physical space
     U = (V).dot(U_.dot(V.T))
 
@@ -56,15 +55,15 @@ if __name__ == '__main__':
     from lega.shen_basis import shen_function, legendre_to_shen_matrix
     from lega.legendre_basis import mass_matrix as L_mass_matrix
     from sympy.plotting import plot3d
-    from sympy.mpmath import quad
+    from sympy import mpmath
     from math import sqrt
-    
+
     # Setup
     x, y = symbols('x, y')
     u = (x**2-1)*sin(2*pi*y)
     f = get_rhs(u)
 
-    n_max = 30
+    n_max = 20
     # Representation of exact solution in the Legendre basis
     u_leg = FLT([n_max+2, n_max+2])(u)
 
@@ -89,10 +88,10 @@ if __name__ == '__main__':
             uh = shen_function(U)
             e = u - uh
             # Get the L2 norm of error, this takes quite some time to compute
-            error = sqrt(quad(lambdify([x, y], e**2), [-1, 1], [-1, 1]))
-            print 'n=%d e_2=%.4E (mass)e_2=%.4E' % (n, error, error_)
+            error = sqrt(mpmath.quad(lambdify([x, y], e**2), [-1, 1], [-1, 1]))
+            print('n=%d e_2=%.4E (mass)e_2=%.4E' % (n, error, error_))
         else:
-            print 'n=%d (mass)e_2=%.4E' % (n, error_)
+            print('n=%d (mass)e_2=%.4E' % (n, error_))
 
         # Mass matrix L2 is used for stopping
         converged = error_ < tol or n > n_max-1

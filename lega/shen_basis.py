@@ -2,7 +2,7 @@ from __future__ import division
 from math import sqrt as Sqrt
 from sympy import sqrt, Symbol, legendre
 from scipy.sparse import eye, diags
-from common import function, tensor_product
+from .common import function, tensor_product
 import numpy as np
 
 
@@ -27,7 +27,7 @@ def shen_basis(n, symbol='x'):
 
 def shen_function(F):
     '''
-    A linear combination of F_i and the Shen basis functions. If F is a 
+    A linear combination of F_i and the Shen basis functions. If F is a
     vector the result is a function of F. For F matrix the output is a function
     of x, y.
     '''
@@ -57,7 +57,7 @@ def mass_matrix(n):
     # Upper
     up_diag = np.array([-weight(i)*weight(i+2)*(2./(2*(i+2)+1))
                         for i in range(n-2)])
-   
+
     if n < 3:
         return diags(main_diag, 0)
     else:
@@ -88,7 +88,7 @@ def load_vector(F):
     functions of Shen and i=0, ..., n-1. Because of how the basis functions are
     defined we have b_i = \int_{-1}^{1} f(x) c_i[L_{i+2}-L_{i}]. At this point
     f(x) is replaced by its Legendre interpolant of degree n+1. Then b = T*M*F,
-    where F is the n+1 long vector of expansion coeffs, M is the (n+1)x(n+1) 
+    where F is the n+1 long vector of expansion coeffs, M is the (n+1)x(n+1)
     mass matrix in Legendre basis and T is the (n-1)x(n+1) transformation matrix
     that takes the result from Legendre to Shen basis. This generatlized to 2d
     as well. with b(matrix) = (T*M)*F(T.M).T. Note F is not necessary square
@@ -184,7 +184,7 @@ if __name__ == '__main__':
         assert abs((ans - ans_).n()) < 1E-13
 
         # Some observations about approximation properties of the shen basis
-        # Consider shen basis of length n and to every f assign a series f_n = 
+        # Consider shen basis of length n and to every f assign a series f_n =
         # sum F_k \phi_k where F_k is the solution to the linear system M*F = b
         # for b in (f, phi_k).
         # How does this behave for a polynomial that is in H^1_0
@@ -200,13 +200,13 @@ if __name__ == '__main__':
 
             e = f-f_n
             error = float(sqrt(quad(lambdify(x, e**2), [-1, 1])))
-            print 'n=%d, error=%g' % (n, error)
+            print('n=%d, error=%g' % (n, error))
 
             # Let's check that f_n in shen can be obtained by mapping legendre
             F_leg = FLT(n+2)(f)
-            F_shen = apply_mass_inverse(F_leg) 
-            
-            print '\t inverse - apply inverse', np.linalg.norm((F - F_shen))
+            F_shen = apply_mass_inverse(F_leg)
+
+            print('\t inverse - apply inverse', np.linalg.norm((F - F_shen)))
 
         # Some function in H^10
         f = (x-1)**2*sin(pi*x)
@@ -221,13 +221,13 @@ if __name__ == '__main__':
 
             e = f-f_n
             error = float(sqrt(quad(lambdify(x, e**2), [-1, 1])))
-            print 'n=%d, error=%g' % (n, error)
+            print('n=%d, error=%g' % (n, error))
 
             # Let's check that f_n in shen can be obtained by mapping legendre
             F_leg = FLT(n+2)(f)
-            F_shen = apply_mass_inverse(F_leg) 
-            # Note how this improves with degree :) 
-            print '\t inverse - apply inverse', np.linalg.norm((F - F_shen))
+            F_shen = apply_mass_inverse(F_leg)
+            # Note how this improves with degree :)
+            print('\t inverse - apply inverse', np.linalg.norm((F - F_shen)))
 
 
         # What about polynomial not there just in H^1 but not in H^1_0 - should be
@@ -243,12 +243,12 @@ if __name__ == '__main__':
 
             e = f-f_n
             error = float(sqrt(quad(lambdify(x, e**2), [-1, 1])))
-            print 'n=%d, error=%g' % (n, error)
+            print('n=%d, error=%g' % (n, error))
 
             F_leg = FLT(n+2)(f)
-            F_shen = apply_mass_inverse(F_leg) 
-            
-            print '\t inverse - apply inverse', np.linalg.norm((F - F_shen))
+            F_shen = apply_mass_inverse(F_leg)
+
+            print('\t inverse - apply inverse', np.linalg.norm((F - F_shen)))
         # And it is
 
     # 2d
